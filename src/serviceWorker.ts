@@ -1,3 +1,4 @@
+
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
@@ -30,7 +31,7 @@ registerRoute(
   ({ request }) => request.mode === 'navigate',
   new NetworkFirst({
     cacheName: 'html-shell',
-    networkTimeoutSeconds: 5,
+    networkTimeoutSeconds: 3, // Reduced timeout for better responsiveness
     plugins: [
       new ExpirationPlugin({
         maxEntries: 50,
@@ -68,16 +69,26 @@ registerRoute(
   })
 );
 
-// Remove old offline fallback since we now have proper HTML shell caching
+// Handle all fetch events with a cache-first fallback
 self.addEventListener('fetch', (event) => {
-  if (!navigator.onLine) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        return cachedResponse || new Response('Offline and resource not cached', {
-          status: 503,
-          statusText: 'Service Unavailable',
-        });
+  event.respondWith(
+    caches.match(event.request)
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Try network, if that fails return a custom offline response
+        return fetch(event.request)
+          .catch(() => {
+            return new Response('Content is not available offline', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({
+                'Content-Type': 'text/plain',
+              }),
+            });
+          });
       })
-    );
-  }
+  );
 });
+
