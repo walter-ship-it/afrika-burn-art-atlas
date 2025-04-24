@@ -1,7 +1,5 @@
 
-import { CacheConfig } from './types';
-
-export const CACHE_CONFIG: CacheConfig = {
+export const CACHE_CONFIG = {
   CACHE_NAME: 'art-atlas-offline-v1',
   HTML_CACHE_NAME: 'art-atlas-html-v1',
   ASSET_CACHE_NAME: 'art-atlas-assets-v1',
