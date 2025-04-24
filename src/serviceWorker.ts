@@ -1,3 +1,4 @@
+
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
@@ -13,8 +14,12 @@ declare const self: ServiceWorkerGlobalScope & {
 declare global {
   interface ServiceWorkerGlobalScope {
     addEventListener(
-      type: 'install' | 'activate' | 'fetch',
-      listener: (event: ExtendedEvent | FetchEvent) => void
+      type: 'install' | 'activate',
+      listener: (event: ExtendedEvent) => void
+    ): void;
+    addEventListener(
+      type: 'fetch',
+      listener: (event: FetchEvent) => void
     ): void;
     skipWaiting(): Promise<void>;
     clients: Clients;
@@ -241,7 +246,7 @@ registerRoute(
 
 // Special handling for all fetch events - improved offline handling
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
+  const request = event.request;
   
   // For navigation requests, try the network first but fall back to cache
   if (request.mode === 'navigate') {
