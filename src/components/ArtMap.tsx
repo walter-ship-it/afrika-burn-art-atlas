@@ -50,7 +50,7 @@ const ArtMap = () => {
 
   // Fetch artworks from CSV and cache in IndexedDB
   const getArtworks = async (): Promise<Artwork[]> => {
-    const CSV_URL = 'https://raw.githubusercontent.com/walter-ship-it/learning/main/keys.csv';
+    const CSV_URL = 'https://raw.githubusercontent.com/walter-ship-it/afrika-burn-art-atlas/main/keys.csv';
     const CACHE_KEY = 'afrikaburn-artworks';
     
     try {
@@ -384,8 +384,8 @@ const ArtMap = () => {
         </div>
       )}
 
-      {/* Custom marker style */}
-      <style jsx>{`
+      <style>
+        {`
         /* Ensure Leaflet container takes full height */
         :global(.leaflet-container) {
           height: 100%;
@@ -406,7 +406,8 @@ const ArtMap = () => {
           color: white !important;
           font-weight: bold;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
