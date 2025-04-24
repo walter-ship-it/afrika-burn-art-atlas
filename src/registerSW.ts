@@ -1,11 +1,17 @@
 
 import { Workbox } from 'workbox-window';
 
+declare global {
+  interface Window {
+    location: Location;
+  }
+}
+
 export const registerServiceWorker = () => {
   if ('serviceWorker' in navigator) {
     const wb = new Workbox('/serviceWorker.js');
 
-    wb.addEventListener('installed', (event) => {
+    wb.addEventListener('installed', (event: { isUpdate: boolean }) => {
       if (event.isUpdate) {
         if (confirm('New content is available. Reload to update?')) {
           window.location.reload();
@@ -13,7 +19,7 @@ export const registerServiceWorker = () => {
       }
     });
 
-    wb.addEventListener('activated', (event) => {
+    wb.addEventListener('activated', (event: { isUpdate: boolean }) => {
       if (event.isUpdate) {
         console.log('Service worker updated');
       } else {

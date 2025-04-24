@@ -4,7 +4,8 @@ import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute } from 'workbox-precaching';
 
-declare const self: ServiceWorkerGlobalScope;
+// Declare ServiceWorkerGlobalScope
+declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: string[] };
 
 // Precache all webpack-generated assets
 precacheAndRoute(self.__WB_MANIFEST);

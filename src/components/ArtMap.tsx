@@ -1,10 +1,3 @@
-
-/**
- * AfrikaBurn Art Atlas - Interactive map component
- * 
- * npm i leaflet leaflet.markercluster idb-keyval workbox-window csv-parse
- */
-
 import { useEffect, useRef, useState } from 'react';
 import { get, set } from 'idb-keyval';
 import { parse } from 'csv-parse/browser/esm/sync';
