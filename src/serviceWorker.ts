@@ -8,6 +8,21 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{url: string, revision: string | null}> 
 };
 
+// Fix for addEventListener not found on ServiceWorkerGlobalScope
+declare global {
+  interface ServiceWorkerGlobalScope {
+    addEventListener(
+      type: 'fetch',
+      listener: (event: FetchEvent) => void
+    ): void;
+  }
+
+  interface FetchEvent extends Event {
+    request: Request;
+    respondWith(response: Promise<Response> | Response): void;
+  }
+}
+
 // Precache all webpack-generated assets
 precacheAndRoute(self.__WB_MANIFEST);
 

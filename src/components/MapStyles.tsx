@@ -2,31 +2,28 @@
 import React from 'react';
 
 const MapStyles = () => (
-  <style>
-    {`
+  <style jsx global>{`
     /* Ensure Leaflet container takes full height */
-    :global(.leaflet-container) {
-      height: 100%;
-      width: 100%;
+    .leaflet-container {
+      height: 100% !important;
+      width: 100% !important;
     }
     
     /* Style cluster markers */
-    :global(.marker-cluster-small),
-    :global(.marker-cluster-medium),
-    :global(.marker-cluster-large) {
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
       background-color: rgba(5, 150, 105, 0.4) !important;
     }
     
-    :global(.marker-cluster-small div),
-    :global(.marker-cluster-medium div),
-    :global(.marker-cluster-large div) {
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
       background-color: rgba(5, 150, 105, 0.7) !important;
       color: white !important;
-      font-weight: bold;
+      font-weight: bold !important;
     }
-    `}
-  </style>
+  `}</style>
 );
 
 export default MapStyles;
-

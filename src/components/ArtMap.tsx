@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -32,64 +32,98 @@ const ArtMap = () => {
   const markerSize = useRef(window.innerWidth < 360 ? 28 : 20);
   const { artworks, setArtworks, isLoading, setIsLoading, getArtworks } = useArtworks();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Initialize map and load data
   useEffect(() => {
     if (!mapRef.current) return;
     
+    console.log('Initializing map...');
+    
     const loadArtworks = async () => {
       setIsLoading(true);
-      const data = await getArtworks();
-      setArtworks(data);
-      setIsLoading(false);
+      try {
+        const data = await getArtworks();
+        console.log(`Loaded ${data.length} artworks`);
+        setArtworks(data);
+      } catch (error) {
+        console.error('Failed to load artworks:', error);
+        setMapError('Failed to load artwork data');
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     if (!leafletMap.current) {
-      leafletMap.current = L.map(mapRef.current, {
-        crs: L.CRS.Simple,
-        preferCanvas: true,
-        fadeAnimation: false,
-        minZoom: -4,
-        maxZoom: 2,
-        inertia: true,
-        zoomControl: true,
-      });
-      
-      const bounds = [[0, 0], [1448, 2068]];
-      L.imageOverlay('/img/map.png', bounds).addTo(leafletMap.current);
-      
-      let initialState: MapState = {
-        lat: 724,
-        lng: 1034,
-        zoom: -2
-      };
-      
       try {
-        const savedState = localStorage.getItem('map-state');
-        if (savedState) {
-          initialState = JSON.parse(savedState) as MapState;
-        }
-      } catch (e) {
-        console.error('Failed to parse saved map state:', e);
-      }
-      
-      leafletMap.current.setView([initialState.lat, initialState.lng], initialState.zoom);
-      leafletMap.current.fitBounds(bounds);
-      
-      leafletMap.current.on('moveend', () => {
-        if (!leafletMap.current) return;
+        leafletMap.current = L.map(mapRef.current, {
+          crs: L.CRS.Simple,
+          preferCanvas: true,
+          fadeAnimation: false,
+          minZoom: -4,
+          maxZoom: 2,
+          inertia: true,
+          zoomControl: true,
+        });
         
-        const center = leafletMap.current.getCenter();
-        const zoom = leafletMap.current.getZoom();
+        const bounds = [[0, 0], [1448, 2068]];
         
-        const state: MapState = {
-          lat: center.lat,
-          lng: center.lng,
-          zoom: zoom,
+        // Test if the map image exists
+        const testImg = new Image();
+        testImg.onload = () => {
+          console.log('Map image loaded successfully!');
+          const overlay = L.imageOverlay('/img/map.png', bounds).addTo(leafletMap.current!);
+          overlay.on('load', () => console.log('Image overlay loaded'));
+          overlay.on('error', (e) => {
+            console.error('Image overlay error:', e);
+            setMapError('Failed to load map image');
+          });
+        };
+        testImg.onerror = () => {
+          console.error('Failed to load map image!');
+          setMapError('Map image not found');
+          // Try with the user-uploaded image as fallback
+          const overlay = L.imageOverlay('/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png', bounds).addTo(leafletMap.current!);
+          console.log('Trying fallback image...');
+        };
+        testImg.src = '/img/map.png';
+        
+        let initialState: MapState = {
+          lat: 724,
+          lng: 1034,
+          zoom: -2
         };
         
-        localStorage.setItem('map-state', JSON.stringify(state));
-      });
+        try {
+          const savedState = localStorage.getItem('map-state');
+          if (savedState) {
+            initialState = JSON.parse(savedState) as MapState;
+          }
+        } catch (e) {
+          console.error('Failed to parse saved map state:', e);
+        }
+        
+        leafletMap.current.setView([initialState.lat, initialState.lng], initialState.zoom);
+        leafletMap.current.fitBounds(bounds);
+        
+        leafletMap.current.on('moveend', () => {
+          if (!leafletMap.current) return;
+          
+          const center = leafletMap.current.getCenter();
+          const zoom = leafletMap.current.getZoom();
+          
+          const state: MapState = {
+            lat: center.lat,
+            lng: center.lng,
+            zoom: zoom,
+          };
+          
+          localStorage.setItem('map-state', JSON.stringify(state));
+        });
+      } catch (e) {
+        console.error('Error initializing map:', e);
+        setMapError('Failed to initialize map');
+      }
     }
 
     loadArtworks();
@@ -105,6 +139,8 @@ const ArtMap = () => {
   // Update markers when artworks data changes
   useEffect(() => {
     if (!leafletMap.current || artworks.length === 0) return;
+    
+    console.log('Updating markers with', artworks.length, 'artworks');
     
     leafletMap.current.eachLayer(layer => {
       if (layer instanceof L.MarkerClusterGroup) {
@@ -180,6 +216,12 @@ const ArtMap = () => {
         role="application"
       />
       {isLoading && <LoadingIndicator />}
+      {mapError && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-[1001]">
+          <p className="font-bold">Error</p>
+          <p>{mapError}</p>
+        </div>
+      )}
       <InstallBanner
         installState={installState}
         promptInstall={promptInstall}
@@ -191,4 +233,3 @@ const ArtMap = () => {
 };
 
 export default ArtMap;
-
