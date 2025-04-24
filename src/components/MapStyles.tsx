@@ -2,7 +2,8 @@
 import React from 'react';
 
 const MapStyles = () => (
-  <style jsx global>{`
+  <style>
+    {`
     /* Ensure Leaflet container takes full height */
     .leaflet-container {
       height: 100% !important;
@@ -23,7 +24,8 @@ const MapStyles = () => (
       color: white !important;
       font-weight: bold !important;
     }
-  `}</style>
+    `}
+  </style>
 );
 
 export default MapStyles;

@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -9,6 +9,9 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import { useArtworks } from '../hooks/useArtworks';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useMapState } from '../hooks/useMapState';
+import { useMarkers } from '../hooks/useMarkers';
+import { useMapInitialization } from '../hooks/useMapInitialization';
 import InstallBanner from './InstallBanner';
 import LoadingIndicator from './LoadingIndicator';
 import MapStyles from './MapStyles';
@@ -20,26 +23,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: iconShadow,
 });
 
-interface MapState {
-  lat: number;
-  lng: number;
-  zoom: number;
-}
-
 const ArtMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
-  const markerSize = useRef(window.innerWidth < 360 ? 28 : 20);
   const { artworks, setArtworks, isLoading, setIsLoading, getArtworks } = useArtworks();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
-  const [mapError, setMapError] = useState<string | null>(null);
+  const { mapError, setMapError, loadSavedMapState, saveMapState } = useMapState();
+  const { markerSize, createMarkerClusterGroup, createMarker } = useMarkers();
 
-  // Initialize map and load data
+  // Initialize map
+  useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
+
+  // Load artworks
   useEffect(() => {
-    if (!mapRef.current) return;
-    
-    console.log('Initializing map...');
-    
     const loadArtworks = async () => {
       setIsLoading(true);
       try {
@@ -53,87 +49,8 @@ const ArtMap = () => {
         setIsLoading(false);
       }
     };
-    
-    if (!leafletMap.current) {
-      try {
-        leafletMap.current = L.map(mapRef.current, {
-          crs: L.CRS.Simple,
-          preferCanvas: true,
-          fadeAnimation: false,
-          minZoom: -4,
-          maxZoom: 2,
-          inertia: true,
-          zoomControl: true,
-        });
-        
-        const bounds = [[0, 0], [1448, 2068]];
-        
-        // Test if the map image exists
-        const testImg = new Image();
-        testImg.onload = () => {
-          console.log('Map image loaded successfully!');
-          const overlay = L.imageOverlay('/img/map.png', bounds).addTo(leafletMap.current!);
-          overlay.on('load', () => console.log('Image overlay loaded'));
-          overlay.on('error', (e) => {
-            console.error('Image overlay error:', e);
-            setMapError('Failed to load map image');
-          });
-        };
-        testImg.onerror = () => {
-          console.error('Failed to load map image!');
-          setMapError('Map image not found');
-          // Try with the user-uploaded image as fallback
-          const overlay = L.imageOverlay('/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png', bounds).addTo(leafletMap.current!);
-          console.log('Trying fallback image...');
-        };
-        testImg.src = '/img/map.png';
-        
-        let initialState: MapState = {
-          lat: 724,
-          lng: 1034,
-          zoom: -2
-        };
-        
-        try {
-          const savedState = localStorage.getItem('map-state');
-          if (savedState) {
-            initialState = JSON.parse(savedState) as MapState;
-          }
-        } catch (e) {
-          console.error('Failed to parse saved map state:', e);
-        }
-        
-        leafletMap.current.setView([initialState.lat, initialState.lng], initialState.zoom);
-        leafletMap.current.fitBounds(bounds);
-        
-        leafletMap.current.on('moveend', () => {
-          if (!leafletMap.current) return;
-          
-          const center = leafletMap.current.getCenter();
-          const zoom = leafletMap.current.getZoom();
-          
-          const state: MapState = {
-            lat: center.lat,
-            lng: center.lng,
-            zoom: zoom,
-          };
-          
-          localStorage.setItem('map-state', JSON.stringify(state));
-        });
-      } catch (e) {
-        console.error('Error initializing map:', e);
-        setMapError('Failed to initialize map');
-      }
-    }
 
     loadArtworks();
-
-    return () => {
-      if (leafletMap.current) {
-        leafletMap.current.remove();
-        leafletMap.current = null;
-      }
-    };
   }, []);
 
   // Update markers when artworks data changes
@@ -148,48 +65,34 @@ const ArtMap = () => {
       }
     });
     
-    const markers = L.markerClusterGroup({
-      maxClusterRadius: 40,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 1,
-      showCoverageOnHover: false,
-    });
-    
-    const markerIcon = L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="
-        background-color: #059669; 
-        opacity: 0.7;
-        width: ${markerSize.current}px; 
-        height: ${markerSize.current}px; 
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      "></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    });
+    const markers = createMarkerClusterGroup();
     
     artworks.forEach(artwork => {
-      const lat = 1448 - artwork.y;
-      const lng = artwork.x;
-      
-      const marker = L.marker([lat, lng], { icon: markerIcon })
-        .bindPopup(`<b>${artwork.title}</b><br/><i>${artwork.category}</i>`)
-        .bindTooltip(artwork.title, { 
-          direction: 'top', 
-          opacity: 0.9,
-          offset: [0, -10],
-        });
-      
+      const marker = createMarker(artwork);
       marker.options.alt = artwork.title;
-      
       markers.addLayer(marker);
     });
     
     leafletMap.current.addLayer(markers);
   }, [artworks]);
+
+  // Save map state on move
+  useEffect(() => {
+    if (!leafletMap.current) return;
+
+    leafletMap.current.on('moveend', () => {
+      if (!leafletMap.current) return;
+      
+      const center = leafletMap.current.getCenter();
+      const zoom = leafletMap.current.getZoom();
+      
+      saveMapState({
+        lat: center.lat,
+        lng: center.lng,
+        zoom: zoom,
+      });
+    });
+  }, []);
 
   // Handle window resize for marker size adjustment
   useEffect(() => {
