@@ -1,6 +1,5 @@
 
 import { CACHE_CONFIG } from './config';
-import { FetchEvent } from './types';
 
 export const handleFetch = (event: FetchEvent) => {
   const request = event.request;
@@ -62,3 +61,4 @@ export const handleFetch = (event: FetchEvent) => {
       })
   );
 };
+

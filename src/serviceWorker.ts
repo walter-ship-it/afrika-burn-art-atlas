@@ -1,13 +1,12 @@
 
+/// <reference lib="webworker" />
+export {};
+
 import { setCacheNameDetails } from 'workbox-core';
 import { SW_CONFIG } from './sw/config';
 import { setupCacheStrategies } from './sw/cache-strategies';
 import { setupPrecache } from './sw/precache';
 import { handleFetch } from './sw/fetch-handler';
-import { ExtendedEvent, FetchEvent } from './sw/types';
-
-// Declare service worker scope for TypeScript
-declare const self: ServiceWorkerGlobalScope;
 
 // Set cache names for better organization
 setCacheNameDetails(SW_CONFIG);
@@ -19,18 +18,19 @@ setupPrecache();
 setupCacheStrategies();
 
 // Install event - prepare cache and skip waiting for immediate activation
-self.addEventListener('install', (event: ExtendedEvent) => {
+self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Install');
   event.waitUntil(self.skipWaiting());
 });
 
 // Activate event - clean old caches and claim clients
-self.addEventListener('activate', (event: ExtendedEvent) => {
+self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activate');
   event.waitUntil(self.clients.claim());
 });
 
 // Special handling for all fetch events
-self.addEventListener('fetch', (event: FetchEvent) => {
+self.addEventListener('fetch', (event) => {
   handleFetch(event);
 });
+
