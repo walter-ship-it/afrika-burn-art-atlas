@@ -1,4 +1,3 @@
-
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
@@ -25,6 +24,21 @@ declare global {
 
 // Precache all webpack-generated assets
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Serve HTML shell while offline with 5s network timeout
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({
+    cacheName: 'html-shell',
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 24 * 60 * 60, // 1 Day
+      }),
+    ],
+  })
+);
 
 // Cache map images with a cache-first strategy
 registerRoute(
@@ -54,28 +68,12 @@ registerRoute(
   })
 );
 
-// Default handler for navigations - network first with cache fallback
-registerRoute(
-  ({ request }) => request.mode === 'navigate',
-  new NetworkFirst({
-    cacheName: 'pages',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-      }),
-    ],
-  })
-);
-
-// Handle offline fallback
+// Remove old offline fallback since we now have proper HTML shell caching
 self.addEventListener('fetch', (event) => {
   if (!navigator.onLine) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return new Response('Offline and resource not cached', {
+        return cachedResponse || new Response('Offline and resource not cached', {
           status: 503,
           statusText: 'Service Unavailable',
         });
