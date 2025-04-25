@@ -1,16 +1,15 @@
-
 /// <reference lib="webworker" />
 export {};
 
-import { registerRoute } from 'workbox-routing';
-import { CacheFirst, NetworkFirst } from 'workbox-strategies';
-import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { CacheFirst, StaleWhileRevalidate, NetworkFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// ---------- 1. precache EVERYTHING Vite injects (html, css, js, icons) ----------
-precacheAndRoute(sw.__WB_MANIFEST);
+/* 1. Precache Vite manifest + explicit "./" */
+precacheAndRoute(sw.__WB_MANIFEST.concat([{ url: './', revision: null }]));
 
 // ---------- 2. cache-first map assets ----------
 registerRoute(
