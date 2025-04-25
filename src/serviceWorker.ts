@@ -9,10 +9,21 @@ import { ExpirationPlugin } from 'workbox-expiration';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-/* 1. Precache Vite manifest + explicit "./" */
-precacheAndRoute(sw.__WB_MANIFEST.concat([{ url: './', revision: null }]));
+/* 1. Precache both "/" and "/index.html" paths */
+precacheAndRoute(
+  sw.__WB_MANIFEST.concat([
+    { url: '/index.html', revision: null },
+    { url: '/', revision: null }
+  ])
+);
 
-// ---------- 2. cache-first map assets ----------
+// ---------- 2. always serve shell for navigations while offline ----------
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  async () => (await caches.match('/index.html'))!
+);
+
+// ---------- 3. cache-first map assets ----------
 registerRoute(
   ({ url }) => url.pathname.startsWith('/img/') || url.pathname.startsWith('/tiles/'),
   new CacheFirst({
@@ -21,21 +32,12 @@ registerRoute(
   })
 );
 
-// ---------- 3. stale-while-revalidate CSV (was NetworkFirst) ----------
+// ---------- 4. stale-while-revalidate CSV (was NetworkFirst) ----------
 registerRoute(
   ({ url }) => url.href.includes('afrika-burn-art-atlas/main/keys.csv'),
   new NetworkFirst({
     cacheName: 'csv-data',
     plugins: [new ExpirationPlugin({ maxEntries: 5, maxAgeSeconds: 86400 })],
-  })
-);
-
-// ---------- 4. navigation fallback ----------
-registerRoute(
-  ({ request }) => request.mode === 'navigate',
-  new NetworkFirst({
-    cacheName: 'html-shell',
-    networkTimeoutSeconds: 3,
   })
 );
 
