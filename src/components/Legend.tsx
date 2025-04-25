@@ -1,10 +1,20 @@
 
 import { categoryColors } from '@/utils/colors';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 const Legend = () => {
   return (
     <div className="absolute bottom-4 right-4 bg-white/90 p-3 rounded-lg shadow-lg z-20">
-      <h3 className="text-sm font-semibold mb-2">Map Legend</h3>
+      <Dialog>
+        <DialogTrigger asChild>
+          <h3 className="text-sm font-semibold mb-2 cursor-pointer hover:text-primary transition-colors">
+            Map Legend
+          </h3>
+        </DialogTrigger>
+        <DialogContent>
+          <p className="text-lg">Jess is a Legend</p>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-2">
         {Object.entries(categoryColors).map(([category, color]) => (
           category !== 'default' && category !== 'support_camp' && (
