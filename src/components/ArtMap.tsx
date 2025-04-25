@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -113,7 +114,7 @@ const ArtMap = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full z-10">  {/* Added z-10 to reduce z-index */}
       <div
         ref={mapRef}
         className="w-full h-screen"
