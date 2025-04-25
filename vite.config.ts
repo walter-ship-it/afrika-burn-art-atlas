@@ -15,6 +15,19 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    {
+      name: 'copy-service-worker',
+      writeBundle: async () => {
+        // Ensure the service worker is copied to the root of the dist folder
+        const srcPath = resolve(__dirname, 'src/serviceWorker.ts');
+        const destPath = resolve(__dirname, 'dist/service-worker.js');
+        
+        if (fs.existsSync(srcPath)) {
+          await fs.copy(srcPath, destPath);
+          console.log('Service worker copied to dist root');
+        }
+      }
+    }
   ].filter(Boolean),
   resolve: {
     alias: {
