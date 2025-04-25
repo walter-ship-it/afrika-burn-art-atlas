@@ -7,7 +7,7 @@ const Legend = () => {
       <h3 className="text-sm font-semibold mb-2">Map Legend</h3>
       <div className="space-y-2">
         {Object.entries(categoryColors).map(([category, color]) => (
-          category !== 'default' && (
+          category !== 'default' && category !== 'support_camp' && (
             <div key={category} className="flex items-center gap-2">
               <div 
                 className="w-4 h-4 rounded-full"
@@ -25,3 +25,4 @@ const Legend = () => {
 };
 
 export default Legend;
+
