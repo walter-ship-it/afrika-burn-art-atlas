@@ -1,3 +1,4 @@
+
 /// <reference lib="webworker" />
 export {};
 
@@ -48,3 +49,7 @@ sw.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// Take immediate control of all clients
+sw.addEventListener('install', () => sw.skipWaiting());
+sw.addEventListener('activate', () => sw.clients.claim());
