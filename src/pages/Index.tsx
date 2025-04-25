@@ -7,9 +7,10 @@ import { ListIcon } from "lucide-react";
 const Index = () => {
   return (
     <div className="h-screen w-screen overflow-hidden relative">
+      <ArtMap />
       <Button 
         variant="outline" 
-        className="absolute top-4 right-4 z-50 bg-white"
+        className="absolute top-16 right-4 z-50 bg-white"
         asChild
       >
         <Link to="/list" className="flex items-center gap-2">
@@ -17,7 +18,6 @@ const Index = () => {
           View List
         </Link>
       </Button>
-      <ArtMap />
     </div>
   );
 };
