@@ -1,6 +1,7 @@
 
-import React from 'react';
+import { useState } from 'react';
 import { InstallState } from '../hooks/useInstallPrompt';
+import OfflineModal from './OfflineModal';
 
 interface InstallBannerProps {
   installState: InstallState;
@@ -9,47 +10,41 @@ interface InstallBannerProps {
 }
 
 const InstallBanner = ({ installState, promptInstall, dismissIOSHint }: InstallBannerProps) => {
-  if (installState === 'can-install') {
-    return (
-      <div className="absolute top-0 left-0 right-0 bg-emerald-700 text-white p-3 flex justify-between items-center z-[1001]">
-        <div className="font-medium">Download offline – no signal at AfrikaBurn</div>
-        <div className="flex gap-2">
-          <button 
-            onClick={promptInstall}
-            className="px-3 py-1 bg-white text-emerald-800 rounded-md font-medium"
-          >
-            Install
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const [showModal, setShowModal] = useState(false);
 
-  if (installState === 'ios-hint') {
-    return (
-      <div className="absolute top-0 left-0 right-0 bg-emerald-700 text-white p-3 flex justify-between items-center z-[1001]">
-        <div className="font-medium">Download offline – no signal at AfrikaBurn</div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => alert("Tap Share icon → Add to Home Screen")}
-            className="px-3 py-1 bg-white text-emerald-800 rounded-md font-medium"
-          >
-            How to Install
-          </button>
-          <button 
-            onClick={dismissIOSHint}
-            className="px-2 py-1 text-white"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (installState === 'installed') return null;
 
-  return null;
+  const handleBannerClick = () => {
+    setShowModal(true);
+  };
+
+  const bannerContent = (
+    <div className="absolute top-0 left-0 right-0 bg-emerald-700 text-white p-3 flex justify-between items-center z-[1001] cursor-pointer" onClick={handleBannerClick}>
+      <div className="font-medium">Want offline access? Tap here to learn how to install & use the map offline</div>
+      {installState === 'ios-hint' && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            dismissIOSHint();
+          }}
+          className="px-2 py-1 text-white"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {bannerContent}
+      <OfflineModal 
+        open={showModal} 
+        onClose={() => setShowModal(false)} 
+      />
+    </>
+  );
 };
 
 export default InstallBanner;
-
