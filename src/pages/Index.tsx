@@ -1,12 +1,12 @@
 
 import { useEffect } from "react";
 import ArtMap from "../components/ArtMap";
-import { registerServiceWorker } from "../registerSW";
+import { registerSW } from "../registerSW";
 
 const Index = () => {
   // Register service worker on mount
   useEffect(() => {
-    registerServiceWorker();
+    registerSW();
   }, []);
 
   return (
