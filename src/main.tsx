@@ -5,10 +5,10 @@ import './index.css'
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Register service worker
+// Register service worker with explicit scope
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
       .then(registration => {
         console.log('SW registered:', registration);
       })

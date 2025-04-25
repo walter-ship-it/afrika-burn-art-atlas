@@ -6,6 +6,7 @@ import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, StaleWhileRevalidate, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -17,13 +18,18 @@ precacheAndRoute(
   ])
 );
 
-// ---------- 2. always serve shell for navigations while offline ----------
+// Add navigation route handler for HTML requests
 registerRoute(
   ({ request }) => request.mode === 'navigate',
-  async () => (await caches.match('/index.html'))!
+  new NetworkFirst({
+    cacheName: 'html-cache',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] })
+    ],
+  })
 );
 
-// ---------- 3. cache-first map assets ----------
+// Cache-first map assets
 registerRoute(
   ({ url }) => url.pathname.startsWith('/img/') || url.pathname.startsWith('/tiles/'),
   new CacheFirst({
@@ -32,7 +38,7 @@ registerRoute(
   })
 );
 
-// ---------- 4. stale-while-revalidate CSV (was NetworkFirst) ----------
+// Network-first for CSV data
 registerRoute(
   ({ url }) => url.href.includes('afrika-burn-art-atlas/main/keys.csv'),
   new NetworkFirst({
@@ -41,7 +47,7 @@ registerRoute(
   })
 );
 
-// ---------- 5. offline fallback for uncached stuff ----------
+// Offline fallback for uncached stuff
 sw.addEventListener('fetch', (event) => {
   if (!navigator.onLine) {
     event.respondWith(
