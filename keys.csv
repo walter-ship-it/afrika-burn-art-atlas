@@ -1,10 +1,160 @@
-id,title,x,y,category
-TC,A Tale of Chapters,892,1049,artwork
-EA,Eye Am Nothing Without Ewe,1421,596,artwork
-IG,Imbadu - The Gathering,930,1128,artwork
-KV,"Kgosigadi, the Village",877,1134,artwork
-LT,Light Tunnel,842,1063,artwork
-SK,Skeletaur,822,981,artwork
-SC,Song Catcher - The Birth Of Song,1050,1236,artwork
-CB,The Canary's Last Breath,1257,896,artwork
-TT,Time To,981,1326,artwork
+id,title,x,y,description,category
+AD,A Street Light Named drzaio,1470,909,,artwork
+AM,Amphibitheatre,1265,1141,,artwork
+BC,Bee Cool Build,1203,821,,artwork
+BF,Best Friends,983,997,,artwork
+BM,Bangers & Mash,1020,743,,artwork
+BO,The Proteas Burning Oath,1492,694,,artwork
+BS,Tip Top Bus Stop,1144,912,,artwork
+CB,The Canary's Last Breath,1264,904,,artwork
+CC,Clam Cabaret,1272,974,,artwork
+CH,Champagneria,1604,565,,artwork
+CL,Unearthed - The Fossil Clan,1151,1061,,artwork
+CO,Conduit II,1455,1091,,artwork
+CR,The Oasis of the Crone,793,924,,artwork
+DC,8th Day of Creation,1485,647,,artwork
+DD,Dissolve in the Desert,1398,813,,artwork
+DJ,Guys Can I DJ?,1005,961,,artwork
+DT,The Dance of the Tetrahedra,1597,728,,artwork
+DV,Twisted Da Vinci,1159,694,,artwork
+EA,Eye Am Nothing Without Ewe,1430,603,,artwork
+EB,Ego Check Booth,834,897,,artwork
+IG,Imbadu - The Gathering,937,1131,,artwork
+IS,It's a sign!,1048,924,,artwork
+JC,Jupiter's Cocoon,1048,1156,,artwork
+KB,KARMA is a bitch,1367,1031,,artwork
+KV,"Kgosigadi, the Village",884,1138,,artwork
+LA,The Labyrinth,1049,967,,artwork
+LH,The Lighthouse,929,882,,artwork
+LO,Lookout tower,1755,412,,artwork
+LT,Light Tunnel,849,1069,,artwork
+MI,Minikring,814,829,,artwork
+MM,Messages from the mystery,937,1028,,artwork
+MN,Mankala,1229,757,,artwork
+MO,The Moloporivah,937,1244,,artwork
+MS,Mirror study 01,1160,1198,,artwork
+OB,OBSCURA,1100,989,,artwork
+PG,MoonMoth,975,889,,artwork
+PS,Palm to Soul,1228,1259,,artwork
+PX,Phoenix 2025,1129,875,,artwork
+QQ,QOHEQOTHWANE,1409,1275,,artwork
+RC,The Rare Cave,1405,743,,artwork
+RE,Red,1748,1067,,artwork
+RS,Antarean Pyramid,1328,694,,artwork
+RT,RocKET,1717,432,,artwork
+S5,Star Tree 5,952,939,,artwork
+SA,Space Ark,1352,623,,artwork
+SB,Skillboratory,877,822,,artwork
+SC,Song Catcher - The Birth Of Song,1056,1244,,artwork
+SE,Seek,1582,989,,artwork
+SH,Sjohest The Sea Horse,1229,694,,artwork
+SK,Skeletaur,834,989,,artwork
+SR,Scratch,1513,1213,,artwork
+SS,Sonic Sanctuary,1383,1244,,artwork
+TC,A Tale of Chapters,899,1054,,artwork
+TD,Tie Down,899,982,,artwork
+TE,Tetragon,1144,772,,artwork
+TG,Talk To God,922,815,,artwork
+TH,Stay For A Thread,1249,581,,artwork
+TI,Tree of Intentions,1151,596,,artwork
+TP,Triple Bypass,1020,787,,artwork
+TT,Time To,990,1333,,artwork
+TU,The Pool Table At The End of The Universe,1533,758,,artwork
+TW,Twist,1100,724,,artwork
+UM,uMlagubane,1026,1013,,artwork
+UX,The Unboxing,1167,881,,artwork
+SD,Sudara,1585,785,,artwork
+404,Camp 404,634,961,,theme_camp
+ASS,ALEGRIA SPACE STATION,1536,250,,theme_camp
+AAS,The Tankwa Town Art Appreciation Society,567,1293,,theme_camp
+ABB,ABnB,881,637,,theme_camp
+ADV,Afrikadelic Village,840,390,,theme_camp
+AMB,Ain't Misbehavin',733,990,,theme_camp
+ATB,aTypical Bar,722,912,,theme_camp
+BAD,Babadoof,1400,299,,theme_camp
+BAH,Bahari Desert,1371,382,,theme_camp
+BDS,Birthday Suits,1002,478,,theme_camp
+BEE,Bee-Haase,644,769,,theme_camp
+BEY,Bull's Eye: Ikoni Pottie,907,437,,theme_camp
+BIO,Bieskop & Bangaz,971,390,,theme_camp
+BLG,Blou-La-Goon,1462,317,,theme_camp
+BMA,Burning Mail,728,1124,,theme_camp
+BMO,Burning Moon,907,271,,theme_camp
+BQS,Burning Questions,1092,440,,theme_camp
+BRS,Braai (s)Arnie,929,330,,theme_camp
+BUB,Buttery Beasts,736,825,,theme_camp
+C0S,Cosmic Cursus,1456,376,,theme_camp
+CAC,CACTUS RISING,561,838,,theme_camp
+CAT,"The Crack House, Home of the Psychic Cat",706,146,,theme_camp
+CCT,Carefree CommuniTea,684,1161,,theme_camp
+CO2,Camp O2,642,1049,,theme_camp
+CWN,Camp Why Not,1503,508,,theme_camp
+DDS,Dust Devil Saloon Bar,725,870,,theme_camp
+DDL,Dragon's Delight,844,308,,theme_camp
+DEL,Camp DelicioZA,1148,457,,theme_camp
+DMT,DMT,1230,370,,theme_camp
+ELE,Elements,1087,475,,theme_camp
+FCC,Fractal Chill Ethiopian coffee house,653,1171,,theme_camp
+FPC,The Flour Power Cartel,693,1190,,theme_camp
+FRR,Front Right,1238,419,,theme_camp
+FSK,Fly Fishing 5K,1612,376,,theme_camp
+FTW,Fairy Tale Window,639,1008,,theme_camp
+GLG,Glitch & Glaze,536,843,,theme_camp
+GOW,Garden of Weeden,778,1124,,theme_camp
+HOS,Heart of Steam,699,769,,theme_camp
+HSP,HeartSpace,996,553,,theme_camp
+HYD,Hydration station,1349,281,,theme_camp
+IKI,The Ikigai Cave,1225,460,,theme_camp
+JLJ,Jolly Lolly Jumpers,644,906,,theme_camp
+KAG,Raggens meet Rainbow,450,706,,theme_camp
+KHV,Khoena Village,818,260,,theme_camp
+KRE,KREME,929,596,,theme_camp
+LAC,Leisure & Chill,1283,457,,theme_camp
+LCT,La Causa Timeless,1580,448,,theme_camp
+LND,Lick n Dab,670,1099,,theme_camp
+LIT,Literary Scents,677,1127,,theme_camp
+LOL,Lands of Love,826,82,,theme_camp
+LPP,Le Petit Paris,737,802,,theme_camp
+LUM,Luminosity Lounge,1456,489,,theme_camp
+MAG,Marmagjam,948,537,,theme_camp
+MAL,Mahala Love,1498,234,,theme_camp
+MDS,Middagslapiz a.k.a Siesta,781,282,,theme_camp
+MET,Metastasia,975,324,,theme_camp
+NAM,namaslay,671,808,,theme_camp
+OAS,Oe-ss-sies,1421,472,,theme_camp
+OCS,isithebe Our Creative Space,681,160,,theme_camp
+PAN,Pandora's Fox,741,1021,,theme_camp
+PAP,Pamoja Project,581,859,,theme_camp
+PFP,Pedals for Peace,431,749,,theme_camp
+PIC,Pickles and Prickles,725,890,,theme_camp
+PSB,Purple Spanking Booth,763,1084,,theme_camp
+RRH,The Ra Ra Hive,609,210,,theme_camp
+SAG,Sacred Garden,494,309,,theme_camp
+SCB,SPACE COWBOYS,1360,463,,theme_camp
+SIS,Sizzle & Synth,921,463,,theme_camp
+SLC,Sweet Love Cinema,634,1117,,theme_camp
+SMS,Smokescream,956,565,,theme_camp
+SPS,The Steampunk Saloon,725,961,,theme_camp
+SPG,Steam Punk Garage,604,1213,,theme_camp
+SSO,Sunset Oasis,739,1240,,theme_camp
+STR,Super Tramps,673,1317,,theme_camp
+SUN,Sunrisers,639,865,,theme_camp
+TAS,The ArtSluts,731,128,,theme_camp
+TBA,The Burning Arms,855,329,,theme_camp
+TDE,The Deep End,1323,460,,theme_camp
+TGM,The Greasemonkeys,589,785,,theme_camp
+TLD,The Lion's Den,1192,443,,theme_camp
+TMB,The MemberBerries,881,390,,theme_camp
+TPC,The Prize Cock,576,1230,,theme_camp
+TPL,The Purple Lounge,1341,335,,theme_camp
+TTS,Time to shine,937,354,,theme_camp
+TWS,The Wet Spot,492,824,,theme_camp
+TUS,Tussen Spaasies,1022,371,,theme_camp
+TUL,Tulpa,454,364,,theme_camp
+VAG,The Vagabonds,1028,514,,theme_camp
+UKU,Ukuthula Gardens,1472,287,,theme_camp
+WAS,Wild and Juicy,482,843,,theme_camp
+WOP,Waves of Peace,709,1036,,theme_camp
+WIF,What If,915,293,,theme_camp
+ZOD,Zodiac,1148,428,,theme_camp
+MED1,Medical,837,660,,medics
