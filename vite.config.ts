@@ -15,15 +15,6 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    {
-      name: 'copy-sw-to-public',
-      closeBundle() {
-        fs.copySync(
-          resolve(__dirname, 'dist/assets/serviceWorker.js'),
-          resolve(__dirname, 'dist/serviceWorker.js')
-        );
-      },
-    },
   ].filter(Boolean),
   resolve: {
     alias: {
