@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -18,6 +17,7 @@ import { useMapInitialization } from '../hooks/useMapInitialization';
 import InstallBanner from './InstallBanner';
 import LoadingIndicator from './LoadingIndicator';
 import MapStyles from './MapStyles';
+import Legend from './Legend';
 
 // Fix Leaflet's default icon paths
 L.Icon.Default.mergeOptions({
@@ -114,7 +114,7 @@ const ArtMap = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-full z-10">  {/* Added z-10 to reduce z-index */}
+    <div className="relative w-full h-full z-10">
       <div
         ref={mapRef}
         className="w-full h-screen"
@@ -133,6 +133,7 @@ const ArtMap = () => {
         promptInstall={promptInstall}
         dismissIOSHint={dismissIOSHint}
       />
+      <Legend />
       <MapStyles />
     </div>
   );
