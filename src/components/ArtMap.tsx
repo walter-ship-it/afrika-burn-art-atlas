@@ -56,11 +56,10 @@ const ArtMap = () => {
     
     setupMapInteractions();
     
-    // Create zone layer only once when map is ready
     console.log('[DEBUG] Initial zone layer setup');
     const zoneLayer = createZoneLayer(leafletMap.current);
     if (zoneLayer) {
-      toggleZoneVisibility(!showOnlyFavorites);
+      toggleZoneVisibility(showOnlyFavorites);
     }
     
     return () => {
@@ -74,11 +73,11 @@ const ArtMap = () => {
     };
   }, [leafletMap.current]);
 
-  // Handle favorites toggle separately
+  // Handle favorites toggle
   useEffect(() => {
     if (!leafletMap.current) return;
-    console.log('[DEBUG] Handling favorites toggle:', !showOnlyFavorites);
-    toggleZoneVisibility(!showOnlyFavorites);
+    console.log('[DEBUG] Handling favorites toggle:', showOnlyFavorites);
+    toggleZoneVisibility(showOnlyFavorites);
   }, [showOnlyFavorites]);
 
   // Create and update markers
@@ -120,7 +119,7 @@ const ArtMap = () => {
     
     setupFavoriteListeners(() => {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
-      toggleZoneVisibility(!showOnlyFavorites);
+      toggleZoneVisibility(showOnlyFavorites);
     });
     
     return () => {

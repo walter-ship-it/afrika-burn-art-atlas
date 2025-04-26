@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import L from 'leaflet';
 
@@ -22,7 +21,7 @@ export const useMapState = () => {
   const zoneLayerIdRef = useRef<string>(`zone-layer-${Date.now()}`);
   const hasActiveLayers = useRef<boolean>(false);
 
-  const loadSavedMapState = (): MapState => {
+  const loadSavedMapState = () => {
     try {
       const savedState = localStorage.getItem('map-state');
       if (savedState) {
@@ -77,7 +76,7 @@ export const useMapState = () => {
     return zoneLayerRef.current;
   };
 
-  const toggleZoneVisibility = (show: boolean) => {
+  const toggleZoneVisibility = (showOnlyFavorites: boolean) => {
     const now = Date.now();
     if (now - lastToggleTimeRef.current < 300) {
       console.log('[DEBUG] Debouncing toggle');
@@ -85,23 +84,22 @@ export const useMapState = () => {
     }
     lastToggleTimeRef.current = now;
     
-    // Only show zones when favorites are OFF
     if (!zoneLayerRef.current || !mapRef.current) {
       console.warn('[DEBUG] Zone layer or map reference is null');
       return;
     }
     
     const isLayerCurrentlyOnMap = mapRef.current.hasLayer(zoneLayerRef.current);
-    console.log(`[DEBUG] Layer currently on map: ${isLayerCurrentlyOnMap}, Show parameter: ${show}`);
+    console.log(`[DEBUG] Layer currently on map: ${isLayerCurrentlyOnMap}, Show only favorites: ${showOnlyFavorites}`);
     
-    // Always hide zones when showing only favorites
-    if (show) {
+    if (showOnlyFavorites) {
+      // Hide zones when showing only favorites
       if (isLayerCurrentlyOnMap) {
         console.log('[DEBUG] Removing zone layer (favorites only mode)');
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
     } else {
-      // Show zones only when NOT in favorites-only mode
+      // Show zones when NOT in favorites-only mode
       if (!isLayerCurrentlyOnMap) {
         console.log('[DEBUG] Adding zone layer (normal mode)');
         mapRef.current.addLayer(zoneLayerRef.current);
