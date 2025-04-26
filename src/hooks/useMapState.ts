@@ -41,8 +41,11 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
+    console.log('[DEBUG] Creating zone layer');
+    
     // Clean up existing layer if it exists
     if (zoneLayerRef.current && mapRef.current) {
+      console.log('[DEBUG] Removing existing zone layer before creating new one');
       mapRef.current.removeLayer(zoneLayerRef.current);
       zoneLayerRef.current.clearLayers();
     }
@@ -54,7 +57,8 @@ export const useMapState = () => {
     zoneLayerRef.current = L.layerGroup();
     
     // Add zone circles
-    ZONES.forEach(zone => {
+    ZONES.forEach((zone, index) => {
+      console.log(`[DEBUG] Adding zone circle ${index + 1}:`, zone);
       L.circle(zone.coords, {
         color: 'green',
         fillColor: 'green',
@@ -63,26 +67,40 @@ export const useMapState = () => {
       }).addTo(zoneLayerRef.current!);
     });
 
+    console.log('[DEBUG] Zone layer created and circles added');
     return zoneLayerRef.current;
   };
 
   const toggleZoneVisibility = (show: boolean) => {
-    if (!zoneLayerRef.current || !mapRef.current) return;
+    console.log(`[DEBUG] Toggling zone visibility: ${show}`);
+    
+    if (!zoneLayerRef.current || !mapRef.current) {
+      console.warn('[DEBUG] Zone layer or map reference is null');
+      return;
+    }
+    
+    const isLayerCurrentlyOnMap = mapRef.current.hasLayer(zoneLayerRef.current);
+    
+    console.log(`[DEBUG] Is zone layer currently on map: ${isLayerCurrentlyOnMap}`);
     
     if (show) {
-      if (!mapRef.current.hasLayer(zoneLayerRef.current)) {
+      if (!isLayerCurrentlyOnMap) {
+        console.log('[DEBUG] Adding zone layer to map');
         mapRef.current.addLayer(zoneLayerRef.current);
       }
     } else {
-      if (mapRef.current.hasLayer(zoneLayerRef.current)) {
+      if (isLayerCurrentlyOnMap) {
+        console.log('[DEBUG] Removing zone layer from map');
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
     }
   };
 
   const cleanupZoneLayer = () => {
+    console.log('[DEBUG] Cleaning up zone layer');
     if (zoneLayerRef.current && mapRef.current) {
       if (mapRef.current.hasLayer(zoneLayerRef.current)) {
+        console.log('[DEBUG] Removing zone layer during cleanup');
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
       zoneLayerRef.current.clearLayers();
@@ -101,4 +119,3 @@ export const useMapState = () => {
     cleanupZoneLayer
   };
 };
-
