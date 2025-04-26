@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from './useArtworks';
 import { getMarkerId } from '../utils/getMarkerId';
@@ -8,12 +8,20 @@ import { useFavorites } from './useFavorites';
 
 export const useMarkerUpdates = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const listenerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
   const setupFavoriteListeners = (updateCallback: () => void) => {
-    document.addEventListener('click', (e) => {
+    // Remove existing listener if any
+    if (listenerRef.current) {
+      document.removeEventListener('click', listenerRef.current);
+    }
+
+    // Create new listener
+    const listener = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('.fav-btn')) {
         e.preventDefault();
+        e.stopPropagation();
         const btn = target.closest('.fav-btn') as HTMLElement;
         const id = btn.dataset.id;
         
@@ -23,7 +31,17 @@ export const useMarkerUpdates = () => {
           updateCallback();
         }
       }
-    });
+    };
+
+    document.addEventListener('click', listener);
+    listenerRef.current = listener;
+
+    // Return cleanup function
+    return () => {
+      if (listenerRef.current) {
+        document.removeEventListener('click', listenerRef.current);
+      }
+    };
   };
 
   const updateMarkerAppearance = (
@@ -40,14 +58,17 @@ export const useMarkerUpdates = () => {
       if (!markerId) return;
       
       const shouldShow = !showOnlyFavorites || isFavorite(markerId);
-      marker.setOpacity(shouldShow ? 1 : 0.2);
       
-      if (leafletMap.current) {
-        const artwork = artworks.find(a => getMarkerId(a) === markerId);
-        if (artwork) {
-          const isFav = isFavorite(markerId);
-          marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
-        }
+      if (!shouldShow) {
+        markersRef.current?.removeLayer(marker);
+      } else if (!markersRef.current?.hasLayer(marker)) {
+        markersRef.current?.addLayer(marker);
+      }
+      
+      const artwork = artworks.find(a => getMarkerId(a) === markerId);
+      if (artwork) {
+        const isFav = isFavorite(markerId);
+        marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
       }
     });
   };

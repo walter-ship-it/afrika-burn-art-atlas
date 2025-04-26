@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -94,6 +93,52 @@ const ArtMap = () => {
   }, [favorites, showOnlyFavorites]);
 
   useEffect(() => {
+    if (!mapRef.current) return;
+    
+    console.log('Initializing map...');
+    
+    if (!leafletMap.current) {
+      try {
+        leafletMap.current = L.map(mapRef.current, {
+          crs: L.CRS.Simple,
+          preferCanvas: true,
+          fadeAnimation: false,
+          minZoom: -4,
+          maxZoom: 2,
+          inertia: true,
+          zoomControl: true,
+        });
+        
+        const bounds = [[0, 0], [1448, 2068]];
+        
+        // Primary image path
+        const primaryImagePath = '/img/map.png';
+        // Fallback image path (using the Lovable uploads)
+        const fallbackImagePath = '/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png';
+        
+        // Try to load the primary image first
+        const testImg = new Image();
+        testImg.onload = () => {
+          console.log('Map image loaded successfully from:', primaryImagePath);
+          const overlay = L.imageOverlay(primaryImagePath, bounds).addTo(leafletMap.current!);
+          overlay.on('load', () => console.log('Image overlay loaded'));
+          overlay.on('error', (e) => {
+            console.error('Image overlay error:', e);
+          };
+        };
+        testImg.onerror = () => {
+          console.error('Failed to load primary map image from:', primaryImagePath);
+        };
+        testImg.src = primaryImagePath;
+        
+        leafletMap.current.setView([724, 1034], -2);
+        leafletMap.current.fitBounds(bounds);
+      } catch (e) {
+        console.error('Error initializing map:', e);
+        setMapError('Failed to initialize map');
+      }
+    }
+
     setupMapInteractions();
   }, []);
 

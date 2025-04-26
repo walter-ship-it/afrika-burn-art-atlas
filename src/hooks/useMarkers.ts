@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from '../hooks/useArtworks';
@@ -27,26 +26,29 @@ export const useMarkers = () => {
     });
     
     const popupContent = `
-      <b>${artwork.title}</b><br/>
-      <i>${artwork.category}</i>
-      <div class="flex justify-end mt-2">
-        <button class="fav-btn ${isFavorite ? 'favourited' : ''}" data-id="${markerId}">
-          <span class="fav-empty">☆</span>
-          <span class="fav-full">★</span>
-        </button>
+      <div class="marker-popup">
+        <b>${artwork.title}</b><br/>
+        <i>${artwork.category}</i>
+        <div class="flex justify-end mt-2">
+          <button class="fav-btn ${isFavorite ? 'favourited' : ''}" data-id="${markerId}">
+            <span class="fav-empty">☆</span>
+            <span class="fav-full">★</span>
+          </button>
+        </div>
       </div>
     `;
     
-    marker.bindPopup(popupContent)
-    .bindTooltip(artwork.title, { 
+    marker.bindPopup(popupContent, {
+      className: 'marker-popup-container',
+    });
+    
+    marker.bindTooltip(artwork.title, { 
       direction: 'top', 
       opacity: 0.9,
       offset: [0, -10],
     });
     
-    // Store the marker ID for later reference
     (marker as any).markerId = markerId;
-    (marker as any).isFavorite = isFavorite;
     
     return marker;
   };
