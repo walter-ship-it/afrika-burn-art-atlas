@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -124,7 +125,7 @@ const ArtMap = () => {
           overlay.on('load', () => console.log('Image overlay loaded'));
           overlay.on('error', (e) => {
             console.error('Image overlay error:', e);
-          };
+          }); // Fixed: replaced semicolon with a closing parenthesis
         };
         testImg.onerror = () => {
           console.error('Failed to load primary map image from:', primaryImagePath);
@@ -164,3 +165,4 @@ const ArtMap = () => {
 };
 
 export default ArtMap;
+
