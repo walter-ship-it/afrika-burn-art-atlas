@@ -117,10 +117,55 @@ const ArtMap = () => {
     
     leafletMap.current.addLayer(markers);
     
-    setupFavoriteListeners(() => {
-      updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
-      toggleZoneVisibility(showOnlyFavorites);
+    // Re-render every popup whenever favourites change
+    const updatePopups = () => {
+      console.log('[Favs] re-rendering popup content for all markers');
+      markers.eachLayer((layer) => {
+        const marker = layer as L.Marker;
+        const id = (marker as any).markerId;
+        if (id) {
+          const isFav = isFavorite(id);
+          const artwork = artworks.find(a => getMarkerId(a) === id);
+          if (artwork) {
+            const popupContent = `
+              <div class="marker-popup">
+                <b>${artwork.title}</b><br/>
+                <i>${artwork.category}</i>
+                <div class="flex justify-end mt-2">
+                  <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${id}">
+                    <span class="fav-empty">☆</span>
+                    <span class="fav-full">★</span>
+                  </button>
+                </div>
+              </div>
+            `;
+            marker.setPopupContent(popupContent);
+          }
+        }
+      });
+    };
+
+    // Set up popup open handler
+    leafletMap.current.on('popupopen', (e) => {
+      const btn = e.popup.getElement()?.querySelector('.fav-btn');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        if (id) {
+          // Remove existing listeners to prevent duplicates
+          const newBtn = btn.cloneNode(true);
+          btn.parentNode?.replaceChild(newBtn, btn);
+          
+          newBtn.addEventListener('click', () => {
+            console.log('[Favs] popup click toggle:', id);
+            toggleFavorite(id);
+          });
+        }
+      }
     });
+
+    // Initial update and subscription to favorites changes
+    updatePopups();
+    setupFavoriteListeners(updatePopups);
     
     return () => {
       if (leafletMap.current && markersRef.current) {
