@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import L from 'leaflet';
 
@@ -47,7 +48,6 @@ export const useMapState = () => {
     
     mapRef.current = map;
     
-    // Clean up existing layer if it exists
     if (zoneLayerRef.current) {
       console.log('[DEBUG] Removing existing zone layer');
       cleanupZoneLayer();
@@ -58,7 +58,6 @@ export const useMapState = () => {
       return null;
     }
     
-    // Create new layer group
     zoneLayerRef.current = L.layerGroup([], { id: zoneLayerIdRef.current });
     
     // Add zone circles
@@ -86,22 +85,27 @@ export const useMapState = () => {
     }
     lastToggleTimeRef.current = now;
     
-    console.log(`[DEBUG] Toggling zone visibility: ${show}, Has active layers:`, hasActiveLayers.current);
-    
+    // Only show zones when favorites are OFF
     if (!zoneLayerRef.current || !mapRef.current) {
       console.warn('[DEBUG] Zone layer or map reference is null');
       return;
     }
     
     const isLayerCurrentlyOnMap = mapRef.current.hasLayer(zoneLayerRef.current);
-    console.log(`[DEBUG] Layer currently on map: ${isLayerCurrentlyOnMap}`);
+    console.log(`[DEBUG] Layer currently on map: ${isLayerCurrentlyOnMap}, Show parameter: ${show}`);
     
-    if (show && !isLayerCurrentlyOnMap) {
-      console.log('[DEBUG] Adding zone layer to map');
-      mapRef.current.addLayer(zoneLayerRef.current);
-    } else if (!show && isLayerCurrentlyOnMap) {
-      console.log('[DEBUG] Removing zone layer from map');
-      mapRef.current.removeLayer(zoneLayerRef.current);
+    // Always hide zones when showing only favorites
+    if (show) {
+      if (isLayerCurrentlyOnMap) {
+        console.log('[DEBUG] Removing zone layer (favorites only mode)');
+        mapRef.current.removeLayer(zoneLayerRef.current);
+      }
+    } else {
+      // Show zones only when NOT in favorites-only mode
+      if (!isLayerCurrentlyOnMap) {
+        console.log('[DEBUG] Adding zone layer (normal mode)');
+        mapRef.current.addLayer(zoneLayerRef.current);
+      }
     }
   };
 
