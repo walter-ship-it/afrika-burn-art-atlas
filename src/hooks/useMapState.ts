@@ -62,7 +62,7 @@ export const useMapState = () => {
     });
 
     mapRef.current = map;
-    console.log('[Zones] Zone layer created successfully');
+    console.log('[Zones] created', zoneLayerRef.current);
     
     return zoneLayerRef.current;
   };
@@ -124,7 +124,6 @@ export const useMapState = () => {
       zoneLayerRef.current.clearLayers();
       zoneLayerRef.current = null;
     }
-    mapRef.current = null;
   };
 
   return {
