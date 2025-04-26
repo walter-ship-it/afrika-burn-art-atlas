@@ -14,7 +14,7 @@ const FavoritesFilter: React.FC<FavoritesFilterProps> = ({
   onChange
 }) => {
   return (
-    <div className="favorites-filter">
+    <div className="favorites-filter absolute top-20 left-4 z-[1000] bg-white p-2 rounded-md border border-gray-200 shadow-sm">
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="show-favorites" 
