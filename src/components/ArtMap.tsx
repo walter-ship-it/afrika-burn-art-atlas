@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -138,6 +139,7 @@ const ArtMap = () => {
       
       // Store markerId in marker options
       marker.options.id = markerId;
+      (marker as any).markerId = markerId;
       
       // Add click handler to open modal
       marker.on('click', () => {
@@ -152,7 +154,7 @@ const ArtMap = () => {
         setTimeout(() => {
           if (leafletMap.current) {
             leafletMap.current.setView(marker.getLatLng(), 0, { animate: true });
-            handleMarkerClick(artwork); // Directly call handler instead of firing click
+            marker.fire('click'); // Fire the click event on the marker
             
             // Add pulse animation
             const el = marker.getElement();
