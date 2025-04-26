@@ -10,6 +10,7 @@ import { useZoneVisibility } from '@/hooks/useZoneVisibility';
 import { useMarkerOperations } from '@/hooks/useMarkerOperations';
 import { useMarkerAppearanceUpdates } from '@/hooks/useMarkerAppearanceUpdates';
 import { useMarkerUpdates } from '@/hooks/useMarkerUpdates';
+import { useMarkers } from '@/hooks/useMarkers';
 import MapRenderer from './MapRenderer';
 import MapControls from './MapControls';
 import MapStatus from './MapStatus';
