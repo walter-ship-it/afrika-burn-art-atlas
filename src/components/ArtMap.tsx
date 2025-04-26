@@ -124,8 +124,8 @@ const ArtMap = () => {
       const markerId = getMarkerId(artwork);
       const isFav = isFavorite(markerId);
       const marker = createMarker(artwork, isFav);
-      marker.options.alt = artwork.title;
       markers.addLayer(marker);
+      updateMarkerVisibility(marker, showOnlyFavorites, markers);
     });
     
     leafletMap.current.addLayer(markers);
@@ -134,11 +134,15 @@ const ArtMap = () => {
     setupFavoriteListeners();
   }, [artworks]);
 
-  // Update markers when favorites or filter changes
+  // Update marker visibility when favorites or filter changes
   useEffect(() => {
-    if (artworks.length > 0) {
-      updateMarkerAppearance();
-    }
+    if (!markersRef.current) return;
+    
+    markersRef.current.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        updateMarkerVisibility(layer, showOnlyFavorites, markersRef.current!);
+      }
+    });
   }, [favorites, showOnlyFavorites]);
 
   // Setup map interactions

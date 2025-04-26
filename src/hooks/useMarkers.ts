@@ -13,6 +13,8 @@ export const useMarkers = () => {
     spiderfyOnMaxZoom: true,
     disableClusteringAtZoom: 1,
     showCoverageOnHover: false,
+    removeOutsideVisibleBounds: true,
+    animate: true,
   });
 
   const createMarker = (artwork: Artwork, isFavorite: boolean = false) => {
@@ -44,13 +46,40 @@ export const useMarkers = () => {
     
     // Store the marker ID for later reference
     (marker as any).markerId = markerId;
+    (marker as any).isFavorite = isFavorite;
     
     return marker;
+  };
+
+  const updateMarkerVisibility = (
+    marker: L.Marker,
+    showOnlyFavorites: boolean,
+    markerGroup: L.MarkerClusterGroup
+  ) => {
+    const isFavorite = (marker as any).isFavorite;
+    const shouldShow = !showOnlyFavorites || isFavorite;
+    
+    if (!shouldShow) {
+      markerGroup.removeLayer(marker);
+      if (marker.getElement()) {
+        marker.getElement().style.display = 'none';
+      }
+      marker.setOpacity(0);
+    } else {
+      if (!markerGroup.hasLayer(marker)) {
+        markerGroup.addLayer(marker);
+      }
+      if (marker.getElement()) {
+        marker.getElement().style.display = '';
+      }
+      marker.setOpacity(1);
+    }
   };
 
   return {
     markerSize,
     createMarkerClusterGroup,
-    createMarker
+    createMarker,
+    updateMarkerVisibility
   };
 };
