@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -57,20 +56,16 @@ const ArtMap = () => {
     
     setupMapInteractions();
     
-    // Only create zone layer once
-    if (!zoneLayerCreatedRef.current) {
-      console.log('[DEBUG] Initial zone layer creation');
-      createZoneLayer(leafletMap.current);
-      zoneLayerCreatedRef.current = true;
-      
-      // Initial toggle based on favorites setting
+    // Create zone layer only once when map is ready
+    console.log('[DEBUG] Initial zone layer setup');
+    const zoneLayer = createZoneLayer(leafletMap.current);
+    if (zoneLayer) {
       toggleZoneVisibility(!showOnlyFavorites);
     }
     
     return () => {
-      console.log('[DEBUG] Map effect cleanup');
+      console.log('[DEBUG] Cleaning up map and zones');
       cleanupZoneLayer();
-      zoneLayerCreatedRef.current = false;
       
       if (leafletMap.current) {
         leafletMap.current.remove();
@@ -78,12 +73,11 @@ const ArtMap = () => {
       }
     };
   }, [leafletMap.current]);
-  
-  // Handle favorites toggle and zone visibility
+
+  // Handle favorites toggle separately
   useEffect(() => {
-    if (!leafletMap.current || !zoneLayerCreatedRef.current) return;
-    
-    console.log('[DEBUG] Handling favorites toggle effect');
+    if (!leafletMap.current) return;
+    console.log('[DEBUG] Handling favorites toggle:', !showOnlyFavorites);
     toggleZoneVisibility(!showOnlyFavorites);
   }, [showOnlyFavorites]);
 

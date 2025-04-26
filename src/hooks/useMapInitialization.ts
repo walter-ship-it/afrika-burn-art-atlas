@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import L from 'leaflet';
 import { MapState } from './useMapState';
@@ -33,11 +32,11 @@ export const useMapInitialization = (
 
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) {
-      console.log('Map already initialized or ref not ready');
+      console.log('[DEBUG] Map already initialized or ref not ready');
       return;
     }
     
-    console.log('Initializing map...');
+    console.log('[DEBUG] Initializing map...');
     
     try {
       const map = L.map(mapRef.current, {
@@ -50,29 +49,26 @@ export const useMapInitialization = (
         zoomControl: true,
       });
       
-      // Clear any previous map layers before setting the new one
-      if (map) {
-        map.eachLayer((layer) => {
-          console.log('Removing existing layer during initialization:', layer);
-          map.removeLayer(layer);
-        });
-      }
+      map.eachLayer((layer) => {
+        console.log('[DEBUG] Removing existing layer:', layer);
+        map.removeLayer(layer);
+      });
       
       leafletMap.current = map;
       const bounds = [[0, 0], [1448, 2068]];
       const primaryImagePath = '/img/map.png';
       
-      console.log('Attempting to load primary image:', primaryImagePath);
+      console.log('[DEBUG] Loading primary image');
       const testImg = new Image();
       
       testImg.onload = () => {
         if (!map) return;
-        console.log('Primary image loaded successfully');
+        console.log('[DEBUG] Primary image loaded');
         L.imageOverlay(primaryImagePath, bounds).addTo(map);
       };
       
       testImg.onerror = () => {
-        console.error('Failed to load primary image');
+        console.error('[DEBUG] Primary image load failed');
         tryFallbackImage(map);
       };
       
@@ -82,20 +78,18 @@ export const useMapInitialization = (
       map.fitBounds(bounds);
       
       return () => {
-        console.log('Cleaning up map...');
+        console.log('[DEBUG] Cleaning up map initialization');
         if (map && map.remove) {
-          // Clear all layers before removing the map
           map.eachLayer(layer => {
-            console.log('Removing layer during map cleanup:', layer);
+            console.log('[DEBUG] Removing layer during cleanup:', layer);
             map.removeLayer(layer);
           });
-          
           map.remove();
           leafletMap.current = null;
         }
       };
     } catch (e) {
-      console.error('Error initializing map:', e);
+      console.error('[DEBUG] Map initialization error:', e);
       setMapError('Failed to initialize map');
     }
   }, [mapRef, initialState, tryFallbackImage]);
