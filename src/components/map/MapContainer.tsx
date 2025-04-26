@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import L from 'leaflet';
 import { useArtworkLoading } from '@/hooks/useArtworkLoading';
@@ -25,7 +24,8 @@ const MapContainer = () => {
   const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility, cleanupZoneLayer } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite, toggleFavorite } = useFavorites();
-  
+  const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
+
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
   const initialState = loadSavedMapState();
@@ -33,7 +33,6 @@ const MapContainer = () => {
   // Set up map interactions when map is ready
   const handleMapReady = (map: L.Map) => {
     leafletMap.current = map;
-    const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
     setupMapInteractions();
     createZoneLayer(map);
   };
