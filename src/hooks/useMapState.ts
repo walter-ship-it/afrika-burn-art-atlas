@@ -44,9 +44,26 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
+    // Skip if map is not valid
+    if (!map) {
+      console.log('[Zones] ❌ Map is null, skipping zone layer creation');
+      return null;
+    }
+
     // Skip if map container is not in DOM
-    if (!map._container || !document.body.contains(map._container)) {
-      console.log('[Zones] ⚠️ Map container not in DOM, skipping zone layer creation');
+    try {
+      if (!map._container || !document.body.contains(map._container)) {
+        console.log('[Zones] ⚠️ Map container not in DOM, skipping zone layer creation');
+        return null;
+      }
+      
+      // Skip if map is being removed or invalid
+      if (!map._panes || !map._mapPane) {
+        console.log('[Zones] ⚠️ Map panes not available, map may be in process of being removed');
+        return null;
+      }
+    } catch (e) {
+      console.error('[Zones] Error checking map state:', e);
       return null;
     }
     
@@ -66,7 +83,8 @@ export const useMapState = () => {
     
     try {
       // Create new layer group with unique ID
-      zoneLayerRef.current = L.layerGroup([], { id: zoneLayerIdRef.current });
+      const layerGroup = L.layerGroup([], { id: zoneLayerIdRef.current });
+      zoneLayerRef.current = layerGroup;
       
       // Store map reference
       mapRef.current = map;
@@ -88,8 +106,8 @@ export const useMapState = () => {
           zoneCirclesRef.current.push(circle);
           
           // Only add to layer if both are valid
-          if (zoneLayerRef.current && circle) {
-            circle.addTo(zoneLayerRef.current);
+          if (layerGroup && circle) {
+            circle.addTo(layerGroup);
           }
         } catch (e) {
           console.error(`[Zones] Failed to create circle ${index + 1}:`, e);
@@ -120,9 +138,21 @@ export const useMapState = () => {
       return;
     }
     
-    // Skip if map container not available
-    if (!mapRef.current._container || !document.body.contains(mapRef.current._container)) {
-      console.warn('[Zones] ❌ Map container no longer exists');
+    // Safely check if map is still valid
+    try {
+      // Skip if map container not available
+      if (!mapRef.current._container || !document.body.contains(mapRef.current._container)) {
+        console.warn('[Zones] ❌ Map container no longer exists');
+        return;
+      }
+      
+      // Skip if map is being destroyed or invalid
+      if (!mapRef.current._panes || !mapRef.current._mapPane) {
+        console.log('[Zones] ⚠️ Map panes not available, map may be in process of being removed');
+        return;
+      }
+    } catch (e) {
+      console.error('[Zones] Error checking map state:', e);
       return;
     }
 
@@ -138,14 +168,28 @@ export const useMapState = () => {
       if (showOnlyFavorites) {
         if (present) {
           console.log('[Zones] ➖ removing zoneLayer');
-          map.removeLayer(layer);
+          try {
+            map.removeLayer(layer);
+          } catch (e) {
+            console.error('[Zones] Error removing layer:', e);
+          }
         } else {
           console.log('[Zones] ℹ️ not present, skip remove');
         }
       } else {
         if (!present) {
           console.log('[Zones] ➕ adding zoneLayer');
-          map.addLayer(layer);
+          try {
+            map.addLayer(layer);
+          } catch (e) {
+            console.error('[Zones] Error adding layer:', e);
+            // If adding fails, recreate the layer
+            if (map && map._container && document.body.contains(map._container)) {
+              isZoneLayerInitializedRef.current = false;
+              zoneLayerRef.current = null;
+              createZoneLayer(map);
+            }
+          }
         } else {
           console.log('[Zones] ℹ️ already present, skip add');
         }
@@ -162,17 +206,30 @@ export const useMapState = () => {
     
     try {
       // First check if the map exists and has a container
-      if (mapRef.current && mapRef.current._container && document.body.contains(mapRef.current._container)) {
-        // Then check if layer exists on map
-        if (zoneLayerRef.current) {
-          console.log('[Zones] Checking if layer exists on map:', mapRef.current.hasLayer(zoneLayerRef.current));
-          if (mapRef.current.hasLayer(zoneLayerRef.current)) {
-            console.log('[Zones] Removing zone layer from map');
-            mapRef.current.removeLayer(zoneLayerRef.current);
+      if (mapRef.current) {
+        try {
+          // Check if map is still valid with a container in the DOM
+          if (mapRef.current._container && document.body.contains(mapRef.current._container)) {
+            // Then check if layer exists on map
+            if (zoneLayerRef.current) {
+              console.log('[Zones] Checking if layer exists on map:', mapRef.current.hasLayer(zoneLayerRef.current));
+              try {
+                if (mapRef.current.hasLayer(zoneLayerRef.current)) {
+                  console.log('[Zones] Removing zone layer from map');
+                  mapRef.current.removeLayer(zoneLayerRef.current);
+                }
+              } catch (e) {
+                console.error('[Zones] Error removing layer from map:', e);
+              }
+            }
+          } else {
+            console.log('[Zones] Map container already removed, skipping layer removal');
           }
+        } catch (e) {
+          console.error('[Zones] Error checking map state during cleanup:', e);
         }
       } else {
-        console.log('[Zones] Map reference missing or container already removed, skipping layer cleanup');
+        console.log('[Zones] Map reference missing, skipping layer cleanup');
       }
       
       // Clear circles references
@@ -185,8 +242,9 @@ export const useMapState = () => {
       console.error('[Zones] Error during cleanup:', e);
     }
     
-    // Reset references regardless of errors
+    // Always clean up the reference
     zoneLayerRef.current = null;
+    mapRef.current = null;
   };
 
   return {

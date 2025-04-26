@@ -16,8 +16,33 @@ export const useMarkerAppearanceUpdates = (
   ) => void
 ) => {
   useEffect(() => {
-    if (markersRef.current) {
+    // Skip if we don't have markers
+    if (!markersRef.current) {
+      return;
+    }
+    
+    // Safely check map state before updating
+    try {
+      if (leafletMap.current) {
+        if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
+          console.log('[MarkerAppearance] Map container not in DOM, skipping updates');
+          return;
+        }
+        
+        if (!leafletMap.current._panes || !leafletMap.current._mapPane) {
+          console.log('[MarkerAppearance] Map panes not available, map may be in process of being removed');
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('[MarkerAppearance] Error checking map state:', e);
+      return;
+    }
+    
+    try {
       updateMarkerAppearance(markersRef as any, leafletMap as any, artworks, showOnlyFavorites);
+    } catch (e) {
+      console.error('[MarkerAppearance] Error updating marker appearance:', e);
     }
   }, [artworks, showOnlyFavorites]);
 };
