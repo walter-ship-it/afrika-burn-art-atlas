@@ -52,6 +52,13 @@ export const useMarkerUpdates = () => {
   ) => {
     if (!markersRef.current || !leafletMap.current) return;
     
+    // Handle cluster group visibility
+    if (showOnlyFavorites) {
+      leafletMap.current.removeLayer(markersRef.current);
+    } else {
+      leafletMap.current.addLayer(markersRef.current);
+    }
+    
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
       const markerId = (marker as any).markerId;

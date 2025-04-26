@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -37,7 +36,7 @@ const ArtMap = () => {
   
   const { artworks, isLoading, mapError, setMapError } = useArtworkLoading();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
-  const { loadSavedMapState, saveMapState } = useMapState();
+  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
@@ -84,12 +83,37 @@ const ArtMap = () => {
     });
     
     leafletMap.current.addLayer(markers);
-    setupFavoriteListeners(() => updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites));
+
+    const zoneLayer = createZoneLayer();
+    const zones = [
+      { coords: [724, 1034], radius: 200 },
+      { coords: [800, 1000], radius: 150 },
+      // Add more zones as needed
+    ];
+
+    zones.forEach(z => {
+      L.circle(z.coords, { 
+        color: 'green',
+        fillColor: 'green',
+        fillOpacity: 0.2,
+        radius: z.radius 
+      }).addTo(zoneLayer);
+    });
+
+    if (leafletMap.current) {
+      zoneLayer.addTo(leafletMap.current);
+    }
+    
+    setupFavoriteListeners(() => {
+      updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
+      toggleZoneVisibility(!showOnlyFavorites);
+    });
   }, [artworks, targetId]);
 
   useEffect(() => {
     if (markersRef.current) {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
+      toggleZoneVisibility(!showOnlyFavorites);
     }
   }, [favorites, showOnlyFavorites]);
 
@@ -125,7 +149,7 @@ const ArtMap = () => {
           overlay.on('load', () => console.log('Image overlay loaded'));
           overlay.on('error', (e) => {
             console.error('Image overlay error:', e);
-          }); // Fixed: replaced semicolon with a closing parenthesis
+          });
         };
         testImg.onerror = () => {
           console.error('Failed to load primary map image from:', primaryImagePath);
@@ -165,4 +189,3 @@ const ArtMap = () => {
 };
 
 export default ArtMap;
-
