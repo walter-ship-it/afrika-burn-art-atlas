@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import L from 'leaflet';
 import { MapState } from './useMapState';
@@ -31,8 +32,15 @@ export const useMapInitialization = (
   }, [setMapError]);
 
   useEffect(() => {
+    // Guard against multiple initializations or missing ref
     if (!mapRef.current || leafletMap.current) {
       console.log('[DEBUG] Map already initialized or ref not ready');
+      return;
+    }
+    
+    // Ensure DOM is ready before initializing map
+    if (!document.body.contains(mapRef.current)) {
+      console.log('[DEBUG] DOM element not in document yet, delaying initialization');
       return;
     }
     
@@ -49,12 +57,14 @@ export const useMapInitialization = (
         zoomControl: true,
       });
       
+      // Store reference immediately to avoid race conditions
+      leafletMap.current = map;
+      
       map.eachLayer((layer) => {
         console.log('[DEBUG] Removing existing layer:', layer);
         map.removeLayer(layer);
       });
       
-      leafletMap.current = map;
       const bounds = [[0, 0], [1448, 2068]];
       const primaryImagePath = '/img/map.png';
       
@@ -62,14 +72,19 @@ export const useMapInitialization = (
       const testImg = new Image();
       
       testImg.onload = () => {
-        if (!map) return;
+        if (!map || !map._container) {
+          console.log('[DEBUG] Map container no longer available');
+          return;
+        }
         console.log('[DEBUG] Primary image loaded');
         L.imageOverlay(primaryImagePath, bounds).addTo(map);
       };
       
       testImg.onerror = () => {
         console.error('[DEBUG] Primary image load failed');
-        tryFallbackImage(map);
+        if (map && map._container) {
+          tryFallbackImage(map);
+        }
       };
       
       testImg.src = primaryImagePath;
@@ -79,13 +94,19 @@ export const useMapInitialization = (
       
       return () => {
         console.log('[DEBUG] Cleaning up map initialization');
-        if (map && map.remove) {
+        if (map) {
+          // Don't set leafletMap.current to null here, let component handle it
           map.eachLayer(layer => {
-            console.log('[DEBUG] Removing layer during cleanup:', layer);
-            map.removeLayer(layer);
+            if (map._container) {
+              console.log('[DEBUG] Removing layer during cleanup:', layer);
+              map.removeLayer(layer);
+            }
           });
-          map.remove();
-          leafletMap.current = null;
+          
+          // Only call remove if container still exists
+          if (map._container) {
+            map.remove();
+          }
         }
       };
     } catch (e) {

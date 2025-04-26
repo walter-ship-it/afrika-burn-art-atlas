@@ -36,6 +36,7 @@ const ArtMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const markersRef = useRef<L.MarkerClusterGroup | null>(null);
+  const isCleanedUp = useRef<boolean>(false);
   
   const { artworks, isLoading, mapError, setMapError } = useArtworkLoading();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
@@ -49,24 +50,36 @@ const ArtMap = () => {
 
   const initialState = loadSavedMapState();
   
-  // Initialize map and set up zone layer in one place
+  // Initialize map with proper error handling
   useMapInitialization(mapRef, leafletMap, setMapError, initialState);
 
-  // Set up map interactions once when map is ready
+  // After map is initialized, set up zone layer and interactions
   useEffect(() => {
-    if (!leafletMap.current) return;
+    if (!leafletMap.current || !leafletMap.current._container) {
+      console.log('[DEBUG] Map not fully initialized yet, skipping setup');
+      return;
+    }
+    
+    // Set up map interactions once
     setupMapInteractions();
     
     // Create zone layer once during initialization
     console.log('[DEBUG] Initial zone layer setup');
     createZoneLayer(leafletMap.current);
     
+    // Cleanup function to run on unmount
     return () => {
-      console.log('[DEBUG] Cleaning up map and zones');
-      cleanupZoneLayer();
-      if (leafletMap.current) {
-        leafletMap.current.remove();
+      if (isCleanedUp.current) {
+        console.log('[DEBUG] Already cleaned up, skipping');
+        return;
       }
+      
+      console.log('[DEBUG] Cleaning up map and zones');
+      
+      // First clean up the zone layers
+      cleanupZoneLayer();
+      
+      isCleanedUp.current = true;
     };
   }, []); // Empty dependency array ensures this runs only once
 
@@ -116,15 +129,17 @@ const ArtMap = () => {
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
       const id = marker.options.id as string;
-      marker.setPopupContent(renderPopupContent(id, favorites.has(id)));
+      if (marker.getPopup()) {
+        marker.setPopupContent(renderPopupContent(id, favorites.has(id)));
+      }
     });
   }, [favorites, artworks]);
 
   // Re-bind click handlers on popup open to ensure they use the latest favorite state
   useEffect(() => {
-    if (!leafletMap.current) return;
+    if (!leafletMap.current || !leafletMap.current._container) return;
 
-    leafletMap.current.on('popupopen', (e) => {
+    const handlePopupOpen = (e: L.PopupEvent) => {
       const btn = e.popup.getElement()?.querySelector('.fav-btn');
       if (btn) {
         const id = btn.getAttribute('data-id');
@@ -138,7 +153,15 @@ const ArtMap = () => {
           });
         }
       }
-    });
+    };
+
+    leafletMap.current.on('popupopen', handlePopupOpen);
+    
+    return () => {
+      if (leafletMap.current && leafletMap.current._container) {
+        leafletMap.current.off('popupopen', handlePopupOpen);
+      }
+    };
   }, [toggleFavorite]);
 
   return (
