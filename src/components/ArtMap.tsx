@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -42,33 +43,37 @@ const ArtMap = () => {
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite, toggleFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
-  const { setupFavoriteListeners, updateMarkerAppearance } = useMarkerUpdates();
 
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
 
   const initialState = loadSavedMapState();
+  
+  // Initialize map and set up zone layer in one place
   useMapInitialization(mapRef, leafletMap, setMapError, initialState);
 
+  // Set up map interactions once when map is ready
   useEffect(() => {
     if (!leafletMap.current) return;
     setupMapInteractions();
+    
+    // Create zone layer once during initialization
     console.log('[DEBUG] Initial zone layer setup');
-    const zoneLayer = createZoneLayer(leafletMap.current);
-    if (zoneLayer) {
-      toggleZoneVisibility(showOnlyFavorites);
-    }
+    createZoneLayer(leafletMap.current);
+    
     return () => {
       console.log('[DEBUG] Cleaning up map and zones');
       cleanupZoneLayer();
       if (leafletMap.current) {
         leafletMap.current.remove();
-        leafletMap.current = null;
       }
     };
-  }, [leafletMap.current]);
+  }, []); // Empty dependency array ensures this runs only once
 
+  // Handle visibility toggling via the dedicated hook
   useZoneVisibility(leafletMap, showOnlyFavorites, toggleZoneVisibility);
+  
+  const { setupFavoriteListeners, updateMarkerAppearance } = useMarkerUpdates();
   
   useMarkerOperations(
     leafletMap,
@@ -103,8 +108,10 @@ const ArtMap = () => {
     </div>
   `;
 
+  // Update popup content when favorites change
   useEffect(() => {
     if (!markersRef.current) return;
+    console.log('[Favs] re-rendering popup content for all markers');
     
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
@@ -113,6 +120,7 @@ const ArtMap = () => {
     });
   }, [favorites, artworks]);
 
+  // Re-bind click handlers on popup open to ensure they use the latest favorite state
   useEffect(() => {
     if (!leafletMap.current) return;
 

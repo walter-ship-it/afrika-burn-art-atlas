@@ -8,8 +8,11 @@ export const useZoneVisibility = (
   toggleZoneVisibility: (show: boolean) => void
 ) => {
   useEffect(() => {
-    if (!leafletMap.current) return;
-    console.log('[DEBUG] Handling favorites toggle:', showOnlyFavorites);
+    if (!leafletMap.current) {
+      console.log('[Zones] Map not available yet, skipping visibility toggle');
+      return;
+    }
+    console.log('[Zones] Toggling zone visibility based on favorites state:', showOnlyFavorites);
     toggleZoneVisibility(showOnlyFavorites);
-  }, [showOnlyFavorites]);
+  }, [showOnlyFavorites, toggleZoneVisibility]);
 };
