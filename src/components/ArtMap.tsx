@@ -34,10 +34,11 @@ const ArtMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const markersRef = useRef<L.MarkerClusterGroup | null>(null);
+  const zoneLayerCreatedRef = useRef<boolean>(false);
   
   const { artworks, isLoading, mapError, setMapError } = useArtworkLoading();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
-  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility } = useMapState();
+  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility, cleanupZoneLayer } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
@@ -55,16 +56,36 @@ const ArtMap = () => {
     if (!leafletMap.current) return;
     
     setupMapInteractions();
-    const zoneLayer = createZoneLayer(leafletMap.current);
-    toggleZoneVisibility(!showOnlyFavorites);
+    
+    // Only create zone layer once
+    if (!zoneLayerCreatedRef.current) {
+      console.log('[DEBUG] Initial zone layer creation');
+      createZoneLayer(leafletMap.current);
+      zoneLayerCreatedRef.current = true;
+      
+      // Initial toggle based on favorites setting
+      toggleZoneVisibility(!showOnlyFavorites);
+    }
     
     return () => {
+      console.log('[DEBUG] Map effect cleanup');
+      cleanupZoneLayer();
+      zoneLayerCreatedRef.current = false;
+      
       if (leafletMap.current) {
         leafletMap.current.remove();
         leafletMap.current = null;
       }
     };
   }, [leafletMap.current]);
+  
+  // Handle favorites toggle and zone visibility
+  useEffect(() => {
+    if (!leafletMap.current || !zoneLayerCreatedRef.current) return;
+    
+    console.log('[DEBUG] Handling favorites toggle effect');
+    toggleZoneVisibility(!showOnlyFavorites);
+  }, [showOnlyFavorites]);
 
   // Create and update markers
   useEffect(() => {
@@ -120,7 +141,6 @@ const ArtMap = () => {
   useEffect(() => {
     if (markersRef.current) {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
-      toggleZoneVisibility(!showOnlyFavorites);
     }
   }, [favorites, showOnlyFavorites, artworks]);
 

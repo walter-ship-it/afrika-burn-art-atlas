@@ -50,6 +50,14 @@ export const useMapInitialization = (
         zoomControl: true,
       });
       
+      // Clear any previous map layers before setting the new one
+      if (map) {
+        map.eachLayer((layer) => {
+          console.log('Removing existing layer during initialization:', layer);
+          map.removeLayer(layer);
+        });
+      }
+      
       leafletMap.current = map;
       const bounds = [[0, 0], [1448, 2068]];
       const primaryImagePath = '/img/map.png';
@@ -76,6 +84,12 @@ export const useMapInitialization = (
       return () => {
         console.log('Cleaning up map...');
         if (map && map.remove) {
+          // Clear all layers before removing the map
+          map.eachLayer(layer => {
+            console.log('Removing layer during map cleanup:', layer);
+            map.removeLayer(layer);
+          });
+          
           map.remove();
           leafletMap.current = null;
         }

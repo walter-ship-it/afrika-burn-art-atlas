@@ -18,6 +18,8 @@ export const useMapState = () => {
   const [mapError, setMapError] = useState<string | null>(null);
   const zoneLayerRef = useRef<L.LayerGroup | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const lastToggleTimeRef = useRef<number>(0);
+  const zoneLayerIdRef = useRef<string>(`zone-layer-${Date.now()}`);
 
   const loadSavedMapState = (): MapState => {
     try {
@@ -41,20 +43,23 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
-    console.log('[DEBUG] Creating zone layer');
+    console.log('[DEBUG] Creating zone layer with ID:', zoneLayerIdRef.current);
     
-    // Clean up existing layer if it exists
-    if (zoneLayerRef.current && mapRef.current) {
-      console.log('[DEBUG] Removing existing zone layer before creating new one');
-      mapRef.current.removeLayer(zoneLayerRef.current);
-      zoneLayerRef.current.clearLayers();
-    }
-
     // Store the map reference
     mapRef.current = map;
     
+    // Clean up existing layer if it exists
+    if (zoneLayerRef.current) {
+      console.log('[DEBUG] Removing existing zone layer before creating new one');
+      if (mapRef.current.hasLayer(zoneLayerRef.current)) {
+        mapRef.current.removeLayer(zoneLayerRef.current);
+      }
+      zoneLayerRef.current.clearLayers();
+      zoneLayerRef.current = null;
+    }
+    
     // Create new layer group
-    zoneLayerRef.current = L.layerGroup();
+    zoneLayerRef.current = L.layerGroup([], { id: zoneLayerIdRef.current });
     
     // Add zone circles
     ZONES.forEach((zone, index) => {
@@ -68,11 +73,21 @@ export const useMapState = () => {
     });
 
     console.log('[DEBUG] Zone layer created and circles added');
+    
+    // Return the layer but don't add it to the map yet
     return zoneLayerRef.current;
   };
 
   const toggleZoneVisibility = (show: boolean) => {
-    console.log(`[DEBUG] Toggling zone visibility: ${show}`);
+    const now = Date.now();
+    // Prevent rapid toggles (debounce)
+    if (now - lastToggleTimeRef.current < 300) {
+      console.log('[DEBUG] Skipping toggle - too soon since last toggle');
+      return;
+    }
+    lastToggleTimeRef.current = now;
+    
+    console.log(`[DEBUG] Toggling zone visibility: ${show} at ${now}`);
     
     if (!zoneLayerRef.current || !mapRef.current) {
       console.warn('[DEBUG] Zone layer or map reference is null');
@@ -83,13 +98,27 @@ export const useMapState = () => {
     
     console.log(`[DEBUG] Is zone layer currently on map: ${isLayerCurrentlyOnMap}`);
     
+    // Check for duplicate layers with similar properties (a common Leaflet issue)
+    let duplicateLayersFound = 0;
+    mapRef.current.eachLayer((layer) => {
+      if (layer !== zoneLayerRef.current && layer instanceof L.LayerGroup) {
+        duplicateLayersFound++;
+        console.log('[DEBUG] Found potential duplicate layer:', layer);
+        mapRef.current!.removeLayer(layer);
+      }
+    });
+    
+    if (duplicateLayersFound > 0) {
+      console.warn(`[DEBUG] Removed ${duplicateLayersFound} duplicate layer groups`);
+    }
+    
     if (show) {
-      if (!isLayerCurrentlyOnMap) {
+      if (!isLayerCurrentlyOnMap && zoneLayerRef.current) {
         console.log('[DEBUG] Adding zone layer to map');
         mapRef.current.addLayer(zoneLayerRef.current);
       }
     } else {
-      if (isLayerCurrentlyOnMap) {
+      if (isLayerCurrentlyOnMap && zoneLayerRef.current) {
         console.log('[DEBUG] Removing zone layer from map');
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
