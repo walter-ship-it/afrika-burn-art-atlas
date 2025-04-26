@@ -20,6 +20,7 @@ export const useMapState = () => {
   const lastToggleTimeRef = useRef<number>(0);
   const zoneLayerIdRef = useRef<string>(`zone-layer-${Date.now()}`);
   const zoneCirclesRef = useRef<L.Circle[]>([]);
+  const isZoneLayerInitializedRef = useRef<boolean>(false);
 
   const loadSavedMapState = () => {
     try {
@@ -28,7 +29,7 @@ export const useMapState = () => {
         return JSON.parse(savedState) as MapState;
       }
     } catch (e) {
-      console.error('Failed to parse saved map state:', e);
+      console.error('[Debug] Failed to parse saved map state:', e);
     }
     
     return {
@@ -43,18 +44,24 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
-    // Enforce singleton pattern
-    if (zoneLayerRef.current) {
-      console.log('[Zones] ❗ Zone layer already exists, reusing existing one with ID:', zoneLayerIdRef.current);
-      return zoneLayerRef.current;
-    }
-    
-    // Safety check to ensure map is ready
-    if (!map._container) {
-      console.log('[Zones] ⚠️ Map container not ready, skipping zone layer creation');
+    // Skip if map container is not in DOM
+    if (!map._container || !document.body.contains(map._container)) {
+      console.log('[Zones] ⚠️ Map container not in DOM, skipping zone layer creation');
       return null;
     }
     
+    // Enforce singleton pattern
+    if (zoneLayerRef.current) {
+      console.log('[Zones] ❗ Zone layer already exists with ID:', zoneLayerIdRef.current);
+      return zoneLayerRef.current;
+    }
+    
+    if (isZoneLayerInitializedRef.current) {
+      console.log('[Zones] ❗ Zone layer was previously initialized, preventing recreation');
+      return null;
+    }
+    
+    isZoneLayerInitializedRef.current = true;
     console.log('[Zones] ✅ Creating new zone layer with ID:', zoneLayerIdRef.current);
     
     try {
@@ -79,26 +86,23 @@ export const useMapState = () => {
           });
           
           zoneCirclesRef.current.push(circle);
-          circle.addTo(zoneLayerRef.current!);
+          
+          // Only add to layer if both are valid
+          if (zoneLayerRef.current && circle) {
+            circle.addTo(zoneLayerRef.current);
+          }
         } catch (e) {
           console.error(`[Zones] Failed to create circle ${index + 1}:`, e);
         }
       });
 
-      console.log('[Zones] Layer created successfully with', Object.keys(zoneLayerRef.current._layers).length, 'circles');
-      
-      // Add the layer to the map here, just once
-      if (map._container) {
-        map.addLayer(zoneLayerRef.current);
-        console.log('[Zones] Layer added to map');
-      } else {
-        console.log('[Zones] ⚠️ Map container not available, layer not added');
-        return null;
-      }
+      console.log('[Zones] Layer created successfully with', 
+        zoneLayerRef.current ? Object.keys(zoneLayerRef.current._layers).length : 0, 'circles');
       
       return zoneLayerRef.current;
     } catch (e) {
       console.error('[Zones] Error creating zone layer:', e);
+      isZoneLayerInitializedRef.current = false; // Reset flag to allow retry
       return null;
     }
   };
@@ -117,7 +121,7 @@ export const useMapState = () => {
     }
     
     // Skip if map container not available
-    if (!mapRef.current._container) {
+    if (!mapRef.current._container || !document.body.contains(mapRef.current._container)) {
       console.warn('[Zones] ❌ Map container no longer exists');
       return;
     }
@@ -125,10 +129,11 @@ export const useMapState = () => {
     console.log('[Zones] toggleZoneVisibility called – showOnly:', showOnlyFavorites);
     const layer = zoneLayerRef.current;
     const map = mapRef.current;
-    const present = map.hasLayer(layer);
-    console.log('[Zones] before toggle – hasLayer?:', present);
-
+    
     try {
+      const present = map.hasLayer(layer);
+      console.log('[Zones] before toggle – layer present on map?:', present);
+
       // Simple logic: hide when showing favorites, show when not showing favorites
       if (showOnlyFavorites) {
         if (present) {
@@ -157,7 +162,7 @@ export const useMapState = () => {
     
     try {
       // First check if the map exists and has a container
-      if (mapRef.current && mapRef.current._container) {
+      if (mapRef.current && mapRef.current._container && document.body.contains(mapRef.current._container)) {
         // Then check if layer exists on map
         if (zoneLayerRef.current) {
           console.log('[Zones] Checking if layer exists on map:', mapRef.current.hasLayer(zoneLayerRef.current));
@@ -165,28 +170,22 @@ export const useMapState = () => {
             console.log('[Zones] Removing zone layer from map');
             mapRef.current.removeLayer(zoneLayerRef.current);
           }
-          
-          // Clear all circles individually first
-          zoneCirclesRef.current.forEach(circle => {
-            if (zoneLayerRef.current) {
-              zoneLayerRef.current.removeLayer(circle);
-            }
-          });
-          
-          // Then clear the layer
-          if (zoneLayerRef.current) {
-            zoneLayerRef.current.clearLayers();
-          }
         }
       } else {
         console.log('[Zones] Map reference missing or container already removed, skipping layer cleanup');
       }
+      
+      // Clear circles references
+      zoneCirclesRef.current = [];
+      
+      // Reset zone layer creation flag
+      isZoneLayerInitializedRef.current = false;
+      
     } catch (e) {
       console.error('[Zones] Error during cleanup:', e);
     }
     
     // Reset references regardless of errors
-    zoneCirclesRef.current = [];
     zoneLayerRef.current = null;
   };
 

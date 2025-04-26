@@ -55,17 +55,26 @@ const ArtMap = () => {
 
   // After map is initialized, set up zone layer and interactions
   useEffect(() => {
-    if (!leafletMap.current || !leafletMap.current._container) {
-      console.log('[DEBUG] Map not fully initialized yet, skipping setup');
+    if (!leafletMap.current) {
+      console.log('[DEBUG] Map not initialized yet, skipping setup');
       return;
     }
+    
+    if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
+      console.log('[DEBUG] Map container not in DOM, skipping setup');
+      return;
+    }
+    
+    console.log('[DEBUG] Setting up map interactions and zone layer');
     
     // Set up map interactions once
     setupMapInteractions();
     
-    // Create zone layer once during initialization
-    console.log('[DEBUG] Initial zone layer setup');
-    createZoneLayer(leafletMap.current);
+    // Create zone layer only if not already created
+    if (leafletMap.current._container && document.body.contains(leafletMap.current._container)) {
+      console.log('[DEBUG] Initial zone layer setup');
+      createZoneLayer(leafletMap.current);
+    }
     
     // Cleanup function to run on unmount
     return () => {
@@ -74,7 +83,7 @@ const ArtMap = () => {
         return;
       }
       
-      console.log('[DEBUG] Cleaning up map and zones');
+      console.log('[DEBUG] Cleaning up map components');
       
       // First clean up the zone layers
       cleanupZoneLayer();
@@ -137,10 +146,18 @@ const ArtMap = () => {
 
   // Re-bind click handlers on popup open to ensure they use the latest favorite state
   useEffect(() => {
-    if (!leafletMap.current || !leafletMap.current._container) return;
+    if (!leafletMap.current) return;
+    
+    // Skip if map container is not in DOM
+    if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
+      return;
+    }
 
     const handlePopupOpen = (e: L.PopupEvent) => {
-      const btn = e.popup.getElement()?.querySelector('.fav-btn');
+      const popup = e.popup.getElement();
+      if (!popup) return;
+      
+      const btn = popup.querySelector('.fav-btn');
       if (btn) {
         const id = btn.getAttribute('data-id');
         if (id) {
@@ -158,7 +175,8 @@ const ArtMap = () => {
     leafletMap.current.on('popupopen', handlePopupOpen);
     
     return () => {
-      if (leafletMap.current && leafletMap.current._container) {
+      if (leafletMap.current && leafletMap.current._container && 
+          document.body.contains(leafletMap.current._container)) {
         leafletMap.current.off('popupopen', handlePopupOpen);
       }
     };
@@ -171,6 +189,7 @@ const ArtMap = () => {
         className="w-full h-screen"
         aria-label="AfrikaBurn Art Map"
         role="application"
+        id="map-container"
       />
       <MapStatus isLoading={isLoading} error={mapError} />
       <MapControls
