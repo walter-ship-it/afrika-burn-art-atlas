@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -84,7 +85,8 @@ const ArtMap = () => {
     
     leafletMap.current.addLayer(markers);
 
-    const zoneLayer = createZoneLayer();
+    // Create zone layer and pass the map reference
+    const zoneLayer = createZoneLayer(leafletMap.current);
     const zones = [
       { coords: [724, 1034], radius: 200 },
       { coords: [800, 1000], radius: 150 },
@@ -100,9 +102,8 @@ const ArtMap = () => {
       }).addTo(zoneLayer);
     });
 
-    if (leafletMap.current) {
-      zoneLayer.addTo(leafletMap.current);
-    }
+    // No need to manually add the layer to the map here
+    // as we're now tracking the map reference in useMapState
     
     setupFavoriteListeners(() => {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
