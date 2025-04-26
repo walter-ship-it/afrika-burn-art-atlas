@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -135,12 +136,12 @@ const ArtMap = () => {
       markers.addLayer(marker);
       updateMarkerVisibility(marker, showOnlyFavorites, markers);
       
-      // If this is the target marker, zoom to it and open popup
+      // If this is the target marker, zoom to it and trigger click handler
       if (targetId && markerId === targetId) {
         setTimeout(() => {
           if (leafletMap.current) {
             leafletMap.current.setView(marker.getLatLng(), 0, { animate: true });
-            marker.openPopup();
+            marker.fire('click'); // This will trigger the existing click handler
             
             // Add pulse animation
             const el = marker.getElement();
