@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
 window.L = L;
@@ -23,6 +23,7 @@ import MapStyles from './MapStyles';
 import { useMarkerOperations } from '../hooks/useMarkerOperations';
 import { useZoneVisibility } from '../hooks/useZoneVisibility';
 import { useMarkerAppearanceUpdates } from '../hooks/useMarkerAppearanceUpdates';
+import { useMarkerUpdates } from '../hooks/useMarkerUpdates';
 
 L.Icon.Default.mergeOptions({
   iconUrl: icon,

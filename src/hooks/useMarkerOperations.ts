@@ -19,13 +19,16 @@ export const useMarkerOperations = (
   useEffect(() => {
     if (!leafletMap.current || !artworks.length) return;
     
-    if (markersRef.current) {
-      leafletMap.current.removeLayer(markersRef.current);
-      markersRef.current = null;
+    // Create a new markers cluster if none exists
+    let markers: L.MarkerClusterGroup;
+    if (!markersRef.current) {
+      markers = createMarkerClusterGroup();
+      // Use non-null assertion because we just created it
+      (markersRef as any).current = markers;
+    } else {
+      markers = markersRef.current;
+      markers.clearLayers();
     }
-    
-    const markers = createMarkerClusterGroup();
-    markersRef.current = markers;
     
     artworks.forEach(artwork => {
       const markerId = getMarkerId(artwork);
@@ -50,7 +53,10 @@ export const useMarkerOperations = (
       markers.addLayer(marker);
     });
     
-    leafletMap.current.addLayer(markers);
+    // Add to map if not already added
+    if (!leafletMap.current.hasLayer(markers)) {
+      leafletMap.current.addLayer(markers);
+    }
     
     const updatePopups = () => {
       console.log('[Favs] re-rendering popup content for all markers');
@@ -99,9 +105,9 @@ export const useMarkerOperations = (
     setupFavoriteListeners(updatePopups);
     
     return () => {
-      if (leafletMap.current && markersRef.current) {
-        leafletMap.current.removeLayer(markersRef.current);
-        markersRef.current = null;
+      // Cleanup only if we need to remove
+      if (leafletMap.current && markers && leafletMap.current.hasLayer(markers)) {
+        leafletMap.current.removeLayer(markers);
       }
     };
   }, [artworks, targetId, leafletMap.current]);
