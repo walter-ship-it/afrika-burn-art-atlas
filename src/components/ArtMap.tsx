@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -36,7 +37,7 @@ const ArtMap = () => {
   const { artworks, setArtworks, isLoading, setIsLoading, getArtworks } = useArtworks();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
   const { mapError, setMapError, loadSavedMapState, saveMapState } = useMapState();
-  const { markerSize, createMarkerClusterGroup, createMarker } = useMarkers();
+  const { markerSize, createMarkerClusterGroup, createMarker, updateMarkerVisibility } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, toggleFavorite, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
 
