@@ -2,34 +2,11 @@
 import { useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from '../hooks/useArtworks';
-import { categoryColors, Category } from '../utils/colors';
+import { createMarkerIcon } from '../utils/markerIcons';
 import { getMarkerId } from '../utils/getMarkerId';
 
 export const useMarkers = () => {
   const markerSize = useRef(window.innerWidth < 360 ? 28 : 20);
-
-  const createMarkerIcon = (category: string, isFavorite: boolean = false) => {
-    const color = isFavorite 
-      ? '#b03060' // maroon color for favorites
-      : categoryColors[category as Category] || categoryColors.default;
-    
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="
-        background-color: ${color}; 
-        opacity: 0.7;
-        width: ${markerSize.current}px; 
-        height: ${markerSize.current}px; 
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        ${isFavorite ? 'box-shadow: 0 0 0 3px #b03060;' : ''}
-      "></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    });
-  };
 
   const createMarkerClusterGroup = () => L.markerClusterGroup({
     maxClusterRadius: 40,

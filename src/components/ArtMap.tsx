@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -17,6 +16,7 @@ import { useMarkers } from '../hooks/useMarkers';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useFavorites } from '../hooks/useFavorites';
 import { getMarkerId } from '../utils/getMarkerId';
+import { createMarkerIcon } from '../utils/markerIcons';
 import InstallBanner from './InstallBanner';
 import LoadingIndicator from './LoadingIndicator';
 import MapStyles from './MapStyles';
@@ -98,10 +98,7 @@ const ArtMap = () => {
       if (leafletMap.current) {
         const artwork = artworks.find(a => getMarkerId(a) === markerId);
         if (artwork) {
-          const lat = 1448 - artwork.y;
-          const lng = artwork.x;
           const isFav = isFavorite(markerId);
-          
           marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
         }
       }
