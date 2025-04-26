@@ -15,7 +15,7 @@ const Index = () => {
       >
         <Link to="/list" className="flex items-center gap-2">
           <ListIcon className="w-4 h-4" />
-          View List
+          View List & Search
         </Link>
       </Button>
     </div>
