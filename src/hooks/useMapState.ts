@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import L from 'leaflet';
 
 export interface MapState {
@@ -34,16 +34,16 @@ export const useMapState = () => {
     localStorage.setItem('map-state', JSON.stringify(state));
   };
 
-  const createZoneLayer = (map?: L.Map) => {
-    const layer = L.layerGroup();
-    zoneLayerRef.current = layer;
+  const createZoneLayer = (map: L.Map) => {
+    // Store the map reference
+    mapRef.current = map;
     
-    // If map is provided, store it for later use
-    if (map) {
-      mapRef.current = map;
+    // Create the layer group if it doesn't exist
+    if (!zoneLayerRef.current) {
+      zoneLayerRef.current = L.layerGroup();
     }
     
-    return layer;
+    return zoneLayerRef.current;
   };
 
   const toggleZoneVisibility = (show: boolean) => {
@@ -62,12 +62,25 @@ export const useMapState = () => {
     }
   };
 
+  // Clean up function to be used when component unmounts
+  const cleanupZoneLayer = () => {
+    if (zoneLayerRef.current && mapRef.current) {
+      if (mapRef.current.hasLayer(zoneLayerRef.current)) {
+        mapRef.current.removeLayer(zoneLayerRef.current);
+      }
+      zoneLayerRef.current.clearLayers();
+      zoneLayerRef.current = null;
+    }
+    mapRef.current = null;
+  };
+
   return {
     mapError,
     setMapError,
     loadSavedMapState,
     saveMapState,
     createZoneLayer,
-    toggleZoneVisibility
+    toggleZoneVisibility,
+    cleanupZoneLayer
   };
 };

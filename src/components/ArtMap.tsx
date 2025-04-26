@@ -37,7 +37,7 @@ const ArtMap = () => {
   
   const { artworks, isLoading, mapError, setMapError } = useArtworkLoading();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
-  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility } = useMapState();
+  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility, cleanupZoneLayer } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
@@ -47,19 +47,55 @@ const ArtMap = () => {
   const targetId = params.get('markerId');
 
   useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
+  
+  // Initialize zone layer once when the map is ready
+  useEffect(() => {
+    if (!leafletMap.current) return;
+    
+    // Create zone layer and define zones
+    const zoneLayer = createZoneLayer(leafletMap.current);
+    
+    const zones = [
+      { coords: [724, 1034], radius: 200 },
+      { coords: [800, 1000], radius: 150 },
+      // Add more zones as needed
+    ];
 
+    // Add zone circles to the layer
+    zones.forEach(z => {
+      L.circle(z.coords, { 
+        color: 'green',
+        fillColor: 'green',
+        fillOpacity: 0.2,
+        radius: z.radius 
+      }).addTo(zoneLayer);
+    });
+    
+    // Initially add the zone layer to the map
+    leafletMap.current.addLayer(zoneLayer);
+    
+    // Clean up on unmount
+    return () => {
+      cleanupZoneLayer();
+    };
+  }, [createZoneLayer, cleanupZoneLayer]);
+
+  // Handle markers when artworks data changes
   useEffect(() => {
     if (!leafletMap.current || artworks.length === 0) return;
     
+    // Remove any existing marker cluster group
     leafletMap.current.eachLayer(layer => {
       if (layer instanceof L.MarkerClusterGroup) {
         leafletMap.current!.removeLayer(layer);
       }
     });
     
+    // Create a new marker cluster group
     const markers = createMarkerClusterGroup();
     markersRef.current = markers;
     
+    // Create markers for each artwork
     artworks.forEach(artwork => {
       const markerId = getMarkerId(artwork);
       const isFav = isFavorite(markerId);
@@ -83,88 +119,34 @@ const ArtMap = () => {
       markers.addLayer(marker);
     });
     
+    // Add the marker cluster group to the map
     leafletMap.current.addLayer(markers);
-
-    // Create zone layer and pass the map reference
-    const zoneLayer = createZoneLayer(leafletMap.current);
-    const zones = [
-      { coords: [724, 1034], radius: 200 },
-      { coords: [800, 1000], radius: 150 },
-      // Add more zones as needed
-    ];
-
-    zones.forEach(z => {
-      L.circle(z.coords, { 
-        color: 'green',
-        fillColor: 'green',
-        fillOpacity: 0.2,
-        radius: z.radius 
-      }).addTo(zoneLayer);
-    });
-
-    // No need to manually add the layer to the map here
-    // as we're now tracking the map reference in useMapState
     
+    // Set up favorite listeners to update markers when favorites change
     setupFavoriteListeners(() => {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
       toggleZoneVisibility(!showOnlyFavorites);
     });
+    
+    // Clean up on unmount
+    return () => {
+      if (leafletMap.current && markersRef.current) {
+        leafletMap.current.removeLayer(markersRef.current);
+        markersRef.current = null;
+      }
+    };
   }, [artworks, targetId]);
 
+  // Update marker and zone visibility when favorites or filter changes
   useEffect(() => {
     if (markersRef.current) {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
       toggleZoneVisibility(!showOnlyFavorites);
     }
-  }, [favorites, showOnlyFavorites]);
+  }, [favorites, showOnlyFavorites, artworks]);
 
+  // This useEffect is now handled by useMapInitialization
   useEffect(() => {
-    if (!mapRef.current) return;
-    
-    console.log('Initializing map...');
-    
-    if (!leafletMap.current) {
-      try {
-        leafletMap.current = L.map(mapRef.current, {
-          crs: L.CRS.Simple,
-          preferCanvas: true,
-          fadeAnimation: false,
-          minZoom: -4,
-          maxZoom: 2,
-          inertia: true,
-          zoomControl: true,
-        });
-        
-        const bounds = [[0, 0], [1448, 2068]];
-        
-        // Primary image path
-        const primaryImagePath = '/img/map.png';
-        // Fallback image path (using the Lovable uploads)
-        const fallbackImagePath = '/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png';
-        
-        // Try to load the primary image first
-        const testImg = new Image();
-        testImg.onload = () => {
-          console.log('Map image loaded successfully from:', primaryImagePath);
-          const overlay = L.imageOverlay(primaryImagePath, bounds).addTo(leafletMap.current!);
-          overlay.on('load', () => console.log('Image overlay loaded'));
-          overlay.on('error', (e) => {
-            console.error('Image overlay error:', e);
-          });
-        };
-        testImg.onerror = () => {
-          console.error('Failed to load primary map image from:', primaryImagePath);
-        };
-        testImg.src = primaryImagePath;
-        
-        leafletMap.current.setView([724, 1034], -2);
-        leafletMap.current.fitBounds(bounds);
-      } catch (e) {
-        console.error('Error initializing map:', e);
-        setMapError('Failed to initialize map');
-      }
-    }
-
     setupMapInteractions();
   }, []);
 

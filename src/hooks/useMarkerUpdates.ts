@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from './useArtworks';
@@ -52,30 +51,35 @@ export const useMarkerUpdates = () => {
   ) => {
     if (!markersRef.current || !leafletMap.current) return;
     
-    // Handle cluster group visibility
-    if (showOnlyFavorites) {
-      leafletMap.current.removeLayer(markersRef.current);
-    } else {
-      leafletMap.current.addLayer(markersRef.current);
-    }
-    
+    // We'll keep the cluster group on the map at all times and handle visibility at the marker level
+    // This avoids issues with marker management and improves performance
+
+    // Iterate through all markers and update their visibility
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
       const markerId = (marker as any).markerId;
       if (!markerId) return;
       
-      const shouldShow = !showOnlyFavorites || isFavorite(markerId);
+      const isFav = isFavorite(markerId);
+      const shouldShow = !showOnlyFavorites || isFav;
       
-      if (!shouldShow) {
-        markersRef.current?.removeLayer(marker);
-      } else if (!markersRef.current?.hasLayer(marker)) {
-        markersRef.current?.addLayer(marker);
-      }
-      
+      // Update marker icon to reflect favorite status
       const artwork = artworks.find(a => getMarkerId(a) === markerId);
       if (artwork) {
-        const isFav = isFavorite(markerId);
         marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
+      }
+
+      // Update marker visibility
+      if (shouldShow) {
+        marker.setOpacity(1);
+        if (marker.getElement()) {
+          marker.getElement()!.style.display = '';
+        }
+      } else {
+        marker.setOpacity(0);
+        if (marker.getElement()) {
+          marker.getElement()!.style.display = 'none';
+        }
       }
     });
   };
