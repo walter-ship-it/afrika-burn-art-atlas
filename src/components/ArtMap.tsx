@@ -1,5 +1,4 @@
-
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import L from 'leaflet';
 // @ts-ignore
 window.L = L;
@@ -22,6 +21,7 @@ import MapStatus from './map/MapStatus';
 import MapStyles from './MapStyles';
 import { getMarkerId } from '../utils/getMarkerId';
 import { createMarkerIcon } from '../utils/markerIcons';
+import { ArtworkModal } from './ArtworkModal';
 
 // Fix Leaflet's default icon paths
 L.Icon.Default.mergeOptions({
@@ -40,6 +40,7 @@ const ArtMap = () => {
   const { markerSize, createMarkerClusterGroup, createMarker, updateMarkerVisibility } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, toggleFavorite, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
+  const [selectedArtwork, setSelectedArtwork] = useState<any | null>(null);
 
   // Add URL params parsing
   const params = new URLSearchParams(window.location.search);
@@ -110,6 +111,11 @@ const ArtMap = () => {
     });
   };
 
+  // Handle marker click
+  const handleMarkerClick = (artwork: any) => {
+    setSelectedArtwork(artwork);
+  };
+
   // Update markers when artworks data changes
   useEffect(() => {
     if (!leafletMap.current || artworks.length === 0) return;
@@ -133,6 +139,11 @@ const ArtMap = () => {
       // Store markerId in marker options
       marker.options.id = markerId;
       
+      // Add click handler to open modal
+      marker.on('click', () => {
+        handleMarkerClick(artwork);
+      });
+      
       markers.addLayer(marker);
       updateMarkerVisibility(marker, showOnlyFavorites, markers);
       
@@ -141,7 +152,7 @@ const ArtMap = () => {
         setTimeout(() => {
           if (leafletMap.current) {
             leafletMap.current.setView(marker.getLatLng(), 0, { animate: true });
-            marker.fire('click'); // This will trigger the existing click handler
+            handleMarkerClick(artwork); // Directly call handler instead of firing click
             
             // Add pulse animation
             const el = marker.getElement();
@@ -191,6 +202,11 @@ const ArtMap = () => {
         dismissIOSHint={dismissIOSHint}
         showOnlyFavorites={showOnlyFavorites}
         setShowOnlyFavorites={setShowOnlyFavorites}
+      />
+      <ArtworkModal
+        artwork={selectedArtwork}
+        open={!!selectedArtwork}
+        onClose={() => setSelectedArtwork(null)}
       />
       <MapStyles />
     </div>
