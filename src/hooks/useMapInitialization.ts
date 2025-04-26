@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import L from 'leaflet';
 import { MapState } from './useMapState';
 
@@ -9,13 +9,38 @@ export const useMapInitialization = (
   setMapError: (error: string | null) => void,
   initialState: MapState
 ) => {
+  const tryFallbackImage = useCallback((map: L.Map) => {
+    const fallbackImagePath = '/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png';
+    const bounds = [[0, 0], [1448, 2068]];
+    
+    console.log('Trying fallback image:', fallbackImagePath);
+    const fallbackImg = new Image();
+    
+    fallbackImg.onload = () => {
+      if (!map) return;
+      console.log('Fallback image loaded successfully!');
+      setMapError(null);
+      L.imageOverlay(fallbackImagePath, bounds).addTo(map);
+    };
+    
+    fallbackImg.onerror = () => {
+      console.error('Failed to load fallback image!');
+      setMapError('Map image not found - please ensure the image is available');
+    };
+    
+    fallbackImg.src = fallbackImagePath;
+  }, [setMapError]);
+
   useEffect(() => {
-    if (!mapRef.current || leafletMap.current) return; // Don't initialize if map already exists
+    if (!mapRef.current || leafletMap.current) {
+      console.log('Map already initialized or ref not ready');
+      return;
+    }
     
     console.log('Initializing map...');
     
     try {
-      leafletMap.current = L.map(mapRef.current, {
+      const map = L.map(mapRef.current, {
         crs: L.CRS.Simple,
         preferCanvas: true,
         fadeAnimation: false,
@@ -25,61 +50,39 @@ export const useMapInitialization = (
         zoomControl: true,
       });
       
+      leafletMap.current = map;
       const bounds = [[0, 0], [1448, 2068]];
-      
-      // Primary image path
       const primaryImagePath = '/img/map.png';
-      // Fallback image path (using the Lovable uploads)
-      const fallbackImagePath = '/lovable-uploads/88cf2c86-ed43-4d55-a4d0-4cf74740daea.png';
       
-      // Try to load the primary image first
+      console.log('Attempting to load primary image:', primaryImagePath);
       const testImg = new Image();
+      
       testImg.onload = () => {
-        if (!leafletMap.current) return; // Safety check if map was removed
-        
-        console.log('Map image loaded successfully from:', primaryImagePath);
-        const overlay = L.imageOverlay(primaryImagePath, bounds).addTo(leafletMap.current);
-        overlay.on('load', () => console.log('Image overlay loaded'));
-        overlay.on('error', (e) => {
-          console.error('Image overlay error:', e);
-          tryFallbackImage();
-        });
+        if (!map) return;
+        console.log('Primary image loaded successfully');
+        L.imageOverlay(primaryImagePath, bounds).addTo(map);
       };
+      
       testImg.onerror = () => {
-        console.error('Failed to load primary map image from:', primaryImagePath);
-        tryFallbackImage();
+        console.error('Failed to load primary image');
+        tryFallbackImage(map);
       };
+      
       testImg.src = primaryImagePath;
       
-      // Function to try loading the fallback image
-      const tryFallbackImage = () => {
-        if (!leafletMap.current) return; // Safety check if map was removed
-        
-        console.log('Trying fallback image:', fallbackImagePath);
-        const fallbackImg = new Image();
-        fallbackImg.onload = () => {
-          if (!leafletMap.current) return; // Safety check
-          
-          console.log('Fallback image loaded successfully!');
-          setMapError(null);
-          const overlay = L.imageOverlay(fallbackImagePath, bounds).addTo(leafletMap.current);
-        };
-        fallbackImg.onerror = () => {
-          console.error('Failed to load fallback image!');
-          setMapError('Map image not found - please ensure the image is available at either path');
-        };
-        fallbackImg.src = fallbackImagePath;
-      };
+      map.setView([initialState.lat, initialState.lng], initialState.zoom);
+      map.fitBounds(bounds);
       
-      leafletMap.current.setView([initialState.lat, initialState.lng], initialState.zoom);
-      leafletMap.current.fitBounds(bounds);
+      return () => {
+        console.log('Cleaning up map...');
+        if (map && map.remove) {
+          map.remove();
+          leafletMap.current = null;
+        }
+      };
     } catch (e) {
       console.error('Error initializing map:', e);
       setMapError('Failed to initialize map');
     }
-
-    return () => {
-      // Cleanup is now handled by ArtMap.tsx
-    };
-  }, []);
+  }, [mapRef, initialState, tryFallbackImage]);
 };

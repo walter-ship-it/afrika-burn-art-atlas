@@ -1,5 +1,4 @@
-
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import L from 'leaflet';
 // @ts-ignore
 window.L = L;
@@ -37,7 +36,7 @@ const ArtMap = () => {
   
   const { artworks, isLoading, mapError, setMapError } = useArtworkLoading();
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
-  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility, cleanupZoneLayer } = useMapState();
+  const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
@@ -46,24 +45,19 @@ const ArtMap = () => {
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
 
-  // Initialize the map with the saved state
+  // Initialize map with saved state
   const initialState = loadSavedMapState();
   useMapInitialization(mapRef, leafletMap, setMapError, initialState);
-
-  // Set up map interactions and zone layers
+  
+  // Set up map interactions and create initial zone layer
   useEffect(() => {
     if (!leafletMap.current) return;
     
-    // Create and add zone layer
-    const zoneLayer = createZoneLayer(leafletMap.current);
-    leafletMap.current.addLayer(zoneLayer);
-    
-    // Setup map interactions
     setupMapInteractions();
+    const zoneLayer = createZoneLayer(leafletMap.current);
+    toggleZoneVisibility(!showOnlyFavorites);
     
-    // Clean up on unmount
     return () => {
-      cleanupZoneLayer();
       if (leafletMap.current) {
         leafletMap.current.remove();
         leafletMap.current = null;
@@ -71,14 +65,9 @@ const ArtMap = () => {
     };
   }, [leafletMap.current]);
 
-  // Toggle zone visibility based on favorites filter
-  useEffect(() => {
-    toggleZoneVisibility(!showOnlyFavorites);
-  }, [showOnlyFavorites]);
-
   // Create and update markers
   useEffect(() => {
-    if (!leafletMap.current || artworks.length === 0) return;
+    if (!leafletMap.current || !artworks.length) return;
     
     if (markersRef.current) {
       leafletMap.current.removeLayer(markersRef.current);
