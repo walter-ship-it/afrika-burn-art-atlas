@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import L from 'leaflet';
 
 export interface MapState {
@@ -7,7 +7,6 @@ export interface MapState {
   zoom: number;
 }
 
-// Define zones as a constant to maintain a single source of truth
 const ZONES = [
   { coords: [724, 1034], radius: 200 },
   { coords: [800, 1000], radius: 150 },
@@ -19,7 +18,6 @@ export const useMapState = () => {
   const mapRef = useRef<L.Map | null>(null);
   const lastToggleTimeRef = useRef<number>(0);
   const zoneLayerIdRef = useRef<string>(`zone-layer-${Date.now()}`);
-  const hasActiveLayers = useRef<boolean>(false);
 
   const loadSavedMapState = () => {
     try {
@@ -43,25 +41,18 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
-    console.log('[DEBUG] Creating zone layer with ID:', zoneLayerIdRef.current);
-    
-    mapRef.current = map;
+    console.log('[Zones] Creating zone layer with ID:', zoneLayerIdRef.current);
     
     if (zoneLayerRef.current) {
-      console.log('[DEBUG] Removing existing zone layer');
+      console.log('[Zones] ⚠️ Existing zone layer found, cleaning up first');
       cleanupZoneLayer();
-    }
-    
-    if (hasActiveLayers.current) {
-      console.log('[DEBUG] Active layers detected, skipping creation');
-      return null;
     }
     
     zoneLayerRef.current = L.layerGroup([], { id: zoneLayerIdRef.current });
     
     // Add zone circles
     ZONES.forEach((zone, index) => {
-      console.log(`[DEBUG] Adding zone circle ${index + 1}:`, zone);
+      console.log(`[Zones] Adding zone circle ${index + 1}:`, zone);
       L.circle(zone.coords, {
         color: 'green',
         fillColor: 'green',
@@ -70,54 +61,69 @@ export const useMapState = () => {
       }).addTo(zoneLayerRef.current!);
     });
 
-    hasActiveLayers.current = true;
-    console.log('[DEBUG] Zone layer created with active layers:', hasActiveLayers.current);
+    mapRef.current = map;
+    console.log('[Zones] Zone layer created successfully');
     
     return zoneLayerRef.current;
   };
 
+  useEffect(() => {
+    console.log('[Zones] ⚙️ initializing zoneLayer');
+    if (!zoneLayerRef.current && mapRef.current) {
+      zoneLayerRef.current = createZoneLayer(mapRef.current);
+      mapRef.current.addLayer(zoneLayerRef.current);
+      console.log('[Zones] created zoneLayer:', zoneLayerRef.current);
+    }
+  }, []); // Empty deps array for single initialization
+
   const toggleZoneVisibility = (showOnlyFavorites: boolean) => {
     const now = Date.now();
     if (now - lastToggleTimeRef.current < 300) {
-      console.log('[DEBUG] Debouncing toggle');
+      console.log('[Zones] 🔄 Debouncing toggle');
       return;
     }
     lastToggleTimeRef.current = now;
     
     if (!zoneLayerRef.current || !mapRef.current) {
-      console.warn('[DEBUG] Zone layer or map reference is null');
+      console.warn('[Zones] ❌ Zone layer or map reference is null');
       return;
     }
-    
-    const isLayerCurrentlyOnMap = mapRef.current.hasLayer(zoneLayerRef.current);
-    console.log(`[DEBUG] Layer currently on map: ${isLayerCurrentlyOnMap}, Show only favorites: ${showOnlyFavorites}`);
-    
-    if (showOnlyFavorites) {
-      // Hide zones when showing only favorites
-      if (isLayerCurrentlyOnMap) {
-        console.log('[DEBUG] Removing zone layer (favorites only mode)');
-        mapRef.current.removeLayer(zoneLayerRef.current);
+
+    console.log('[Zones] toggleZoneVisibility called – showOnly:', showOnlyFavorites);
+    const layer = zoneLayerRef.current;
+    const map = mapRef.current;
+    const present = map.hasLayer(layer);
+    console.log('[Zones] before toggle – hasLayer?:', present);
+
+    if (!showOnlyFavorites) {
+      if (!present) {
+        console.log('[Zones] ➕ adding zoneLayer');
+        map.addLayer(layer);
+      } else {
+        console.log('[Zones] ℹ️ already present, skip add');
       }
     } else {
-      // Show zones when NOT in favorites-only mode
-      if (!isLayerCurrentlyOnMap) {
-        console.log('[DEBUG] Adding zone layer (normal mode)');
-        mapRef.current.addLayer(zoneLayerRef.current);
+      if (present) {
+        console.log('[Zones] ➖ removing zoneLayer');
+        map.removeLayer(layer);
+      } else {
+        console.log('[Zones] ℹ️ not present, skip remove');
       }
     }
+    
+    console.log('[Zones] after toggle – hasLayer?:', map.hasLayer(layer));
   };
 
   const cleanupZoneLayer = () => {
-    console.log('[DEBUG] Cleaning up zone layer');
+    console.log('[Zones] 🧹 Cleaning up zone layer');
     if (zoneLayerRef.current && mapRef.current) {
       if (mapRef.current.hasLayer(zoneLayerRef.current)) {
-        console.log('[DEBUG] Removing zone layer from map');
+        console.log('[Zones] Removing zone layer from map');
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
       zoneLayerRef.current.clearLayers();
       zoneLayerRef.current = null;
     }
-    hasActiveLayers.current = false;
     mapRef.current = null;
   };
 
