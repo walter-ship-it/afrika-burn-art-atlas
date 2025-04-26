@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -45,30 +46,22 @@ const ArtMap = () => {
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
 
-  useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
+  // Initialize the map with the saved state
+  const initialState = loadSavedMapState();
+  useMapInitialization(mapRef, leafletMap, setMapError, initialState);
 
+  // Set up map interactions and zone layers
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!leafletMap.current) return;
     
-    const initialState = loadSavedMapState();
-    
-    leafletMap.current = L.map(mapRef.current, {
-      crs: L.CRS.Simple,
-      preferCanvas: true,
-      fadeAnimation: false,
-      minZoom: -4,
-      maxZoom: 2,
-      inertia: true,
-      zoomControl: true,
-    });
-    
-    leafletMap.current.setView([initialState.lat, initialState.lng], initialState.zoom);
-    
+    // Create and add zone layer
     const zoneLayer = createZoneLayer(leafletMap.current);
     leafletMap.current.addLayer(zoneLayer);
     
+    // Setup map interactions
     setupMapInteractions();
     
+    // Clean up on unmount
     return () => {
       cleanupZoneLayer();
       if (leafletMap.current) {
@@ -76,12 +69,14 @@ const ArtMap = () => {
         leafletMap.current = null;
       }
     };
-  }, []);
+  }, [leafletMap.current]);
 
+  // Toggle zone visibility based on favorites filter
   useEffect(() => {
     toggleZoneVisibility(!showOnlyFavorites);
   }, [showOnlyFavorites]);
 
+  // Create and update markers
   useEffect(() => {
     if (!leafletMap.current || artworks.length === 0) return;
     
@@ -129,18 +124,15 @@ const ArtMap = () => {
         markersRef.current = null;
       }
     };
-  }, [artworks, targetId]);
+  }, [artworks, targetId, leafletMap.current]);
 
+  // Update markers when favorites change
   useEffect(() => {
     if (markersRef.current) {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
       toggleZoneVisibility(!showOnlyFavorites);
     }
   }, [favorites, showOnlyFavorites, artworks]);
-
-  useEffect(() => {
-    setupMapInteractions();
-  }, []);
 
   return (
     <div className="relative w-full h-full z-10">
