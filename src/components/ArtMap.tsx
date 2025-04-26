@@ -1,8 +1,9 @@
 
 import React from 'react';
+import L from 'leaflet';
+// Now that L is imported, we can assign it to window
 // @ts-ignore
 window.L = L;
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
