@@ -15,13 +15,12 @@ import { useMapState } from '../hooks/useMapState';
 import { useMarkers } from '../hooks/useMarkers';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useFavorites } from '../hooks/useFavorites';
+import { useMapInteractions } from '../hooks/useMapInteractions';
+import MapControls from './map/MapControls';
+import MapStatus from './map/MapStatus';
+import MapStyles from './MapStyles';
 import { getMarkerId } from '../utils/getMarkerId';
 import { createMarkerIcon } from '../utils/markerIcons';
-import InstallBanner from './InstallBanner';
-import LoadingIndicator from './LoadingIndicator';
-import MapStyles from './MapStyles';
-import Legend from './Legend';
-import FavoritesFilter from './FavoritesFilter';
 
 // Fix Leaflet's default icon paths
 L.Icon.Default.mergeOptions({
@@ -39,6 +38,7 @@ const ArtMap = () => {
   const { mapError, setMapError, loadSavedMapState, saveMapState } = useMapState();
   const { markerSize, createMarkerClusterGroup, createMarker } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, toggleFavorite, isFavorite } = useFavorites();
+  const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
 
   // Initialize map
   useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
@@ -141,38 +141,9 @@ const ArtMap = () => {
     }
   }, [favorites, showOnlyFavorites]);
 
-  // Save map state on move
+  // Setup map interactions
   useEffect(() => {
-    if (!leafletMap.current) return;
-
-    leafletMap.current.on('moveend', () => {
-      if (!leafletMap.current) return;
-      
-      const center = leafletMap.current.getCenter();
-      const zoom = leafletMap.current.getZoom();
-      
-      saveMapState({
-        lat: center.lat,
-        lng: center.lng,
-        zoom: zoom,
-      });
-    });
-  }, []);
-
-  // Handle window resize for marker size adjustment
-  useEffect(() => {
-    const handleResize = () => {
-      const newSize = window.innerWidth < 360 ? 28 : 20;
-      if (newSize !== markerSize.current) {
-        markerSize.current = newSize;
-        setArtworks(prev => [...prev]);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    setupMapInteractions();
   }, []);
 
   return (
@@ -183,23 +154,14 @@ const ArtMap = () => {
         aria-label="AfrikaBurn Art Map"
         role="application"
       />
-      {isLoading && <LoadingIndicator />}
-      {mapError && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-[1001]">
-          <p className="font-bold">Error</p>
-          <p>{mapError}</p>
-        </div>
-      )}
-      <InstallBanner
+      <MapStatus isLoading={isLoading} error={mapError} />
+      <MapControls
         installState={installState}
         promptInstall={promptInstall}
         dismissIOSHint={dismissIOSHint}
-      />
-      <FavoritesFilter 
         showOnlyFavorites={showOnlyFavorites}
-        onChange={setShowOnlyFavorites}
+        setShowOnlyFavorites={setShowOnlyFavorites}
       />
-      <Legend />
       <MapStyles />
     </div>
   );
