@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -22,9 +21,7 @@ import MapStatus from './map/MapStatus';
 import MapStyles from './MapStyles';
 import { getMarkerId } from '../utils/getMarkerId';
 import { createMarkerIcon } from '../utils/markerIcons';
-import { ArtworkModal } from './ArtworkModal';
 
-// Fix Leaflet's default icon paths
 L.Icon.Default.mergeOptions({
   iconUrl: icon,
   iconRetinaUrl: iconRetina,
@@ -41,16 +38,12 @@ const ArtMap = () => {
   const { markerSize, createMarkerClusterGroup, createMarker, updateMarkerVisibility } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, toggleFavorite, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
-  const [selectedArtwork, setSelectedArtwork] = useState<any | null>(null);
 
-  // Add URL params parsing
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
 
-  // Initialize map
   useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
 
-  // Load artworks
   useEffect(() => {
     const loadArtworks = async () => {
       setIsLoading(true);
@@ -69,7 +62,6 @@ const ArtMap = () => {
     loadArtworks();
   }, []);
 
-  // Handle favorite toggling on popup click
   const setupFavoriteListeners = () => {
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
@@ -81,15 +73,12 @@ const ArtMap = () => {
         if (id) {
           toggleFavorite(id);
           btn.classList.toggle('favourited');
-          
-          // Update marker appearance
           updateMarkerAppearance();
         }
       }
     });
   };
 
-  // Update all markers based on favorite status
   const updateMarkerAppearance = () => {
     if (!markersRef.current || !leafletMap.current) return;
     
@@ -101,7 +90,6 @@ const ArtMap = () => {
       const shouldShow = !showOnlyFavorites || isFavorite(markerId);
       marker.setOpacity(shouldShow ? 1 : 0.2);
       
-      // Recreate marker with updated favorite status
       if (leafletMap.current) {
         const artwork = artworks.find(a => getMarkerId(a) === markerId);
         if (artwork) {
@@ -112,12 +100,6 @@ const ArtMap = () => {
     });
   };
 
-  // Handle marker click
-  const handleMarkerClick = (artwork: any) => {
-    setSelectedArtwork(artwork);
-  };
-
-  // Update markers when artworks data changes
   useEffect(() => {
     if (!leafletMap.current || artworks.length === 0) return;
     
@@ -137,26 +119,15 @@ const ArtMap = () => {
       const isFav = isFavorite(markerId);
       const marker = createMarker(artwork, isFav);
       
-      // Store markerId in marker options
       marker.options.id = markerId;
       (marker as any).markerId = markerId;
       
-      // Add click handler to open modal
-      marker.on('click', () => {
-        handleMarkerClick(artwork);
-      });
-      
-      markers.addLayer(marker);
-      updateMarkerVisibility(marker, showOnlyFavorites, markers);
-      
-      // If this is the target marker, zoom to it and trigger click handler
       if (targetId && markerId === targetId) {
         setTimeout(() => {
           if (leafletMap.current) {
             leafletMap.current.setView(marker.getLatLng(), 0, { animate: true });
-            marker.fire('click'); // Fire the click event on the marker
+            marker.openPopup();
             
-            // Add pulse animation
             const el = marker.getElement();
             if (el) {
               el.classList.add('pulse');
@@ -165,15 +136,15 @@ const ArtMap = () => {
           }
         }, 100);
       }
+      
+      markers.addLayer(marker);
+      updateMarkerVisibility(marker, showOnlyFavorites, markers);
     });
     
     leafletMap.current.addLayer(markers);
-    
-    // Setup favorite button click handlers
     setupFavoriteListeners();
   }, [artworks, targetId]);
 
-  // Update marker visibility when favorites or filter changes
   useEffect(() => {
     if (!markersRef.current) return;
     
@@ -184,7 +155,6 @@ const ArtMap = () => {
     });
   }, [favorites, showOnlyFavorites]);
 
-  // Setup map interactions
   useEffect(() => {
     setupMapInteractions();
   }, []);
@@ -204,11 +174,6 @@ const ArtMap = () => {
         dismissIOSHint={dismissIOSHint}
         showOnlyFavorites={showOnlyFavorites}
         setShowOnlyFavorites={setShowOnlyFavorites}
-      />
-      <ArtworkModal
-        artwork={selectedArtwork}
-        open={!!selectedArtwork}
-        onClose={() => setSelectedArtwork(null)}
       />
       <MapStyles />
     </div>
