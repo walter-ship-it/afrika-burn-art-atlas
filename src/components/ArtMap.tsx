@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
@@ -40,6 +39,10 @@ const ArtMap = () => {
   const { markerSize, createMarkerClusterGroup, createMarker, updateMarkerVisibility } = useMarkers();
   const { favorites, showOnlyFavorites, setShowOnlyFavorites, toggleFavorite, isFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
+
+  // Add URL params parsing
+  const params = new URLSearchParams(window.location.search);
+  const targetId = params.get('markerId');
 
   // Initialize map
   useMapInitialization(mapRef, leafletMap, setMapError, loadSavedMapState());
@@ -125,15 +128,36 @@ const ArtMap = () => {
       const markerId = getMarkerId(artwork);
       const isFav = isFavorite(markerId);
       const marker = createMarker(artwork, isFav);
+      
+      // Store markerId in marker options
+      marker.options.id = markerId;
+      
       markers.addLayer(marker);
       updateMarkerVisibility(marker, showOnlyFavorites, markers);
+      
+      // If this is the target marker, zoom to it and open popup
+      if (targetId && markerId === targetId) {
+        setTimeout(() => {
+          if (leafletMap.current) {
+            leafletMap.current.setView(marker.getLatLng(), 0, { animate: true });
+            marker.openPopup();
+            
+            // Add pulse animation
+            const el = marker.getElement();
+            if (el) {
+              el.classList.add('pulse');
+              setTimeout(() => el.classList.remove('pulse'), 3000);
+            }
+          }
+        }, 100);
+      }
     });
     
     leafletMap.current.addLayer(markers);
     
     // Setup favorite button click handlers
     setupFavoriteListeners();
-  }, [artworks]);
+  }, [artworks, targetId]);
 
   // Update marker visibility when favorites or filter changes
   useEffect(() => {

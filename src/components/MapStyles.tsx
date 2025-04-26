@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const MapStyles = () => (
@@ -67,6 +66,16 @@ const MapStyles = () => (
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+
+    .leaflet-marker-icon.pulse {
+      animation: pulse 0.8s ease-out 3;
     }
     `}
   </style>

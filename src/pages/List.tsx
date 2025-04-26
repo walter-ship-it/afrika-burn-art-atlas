@@ -2,18 +2,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MapIcon } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useArtworks } from "@/hooks/useArtworks";
 import { useEffect } from "react";
 import { categoryColors, Category } from "@/utils/colors";
+import { getMarkerId } from "@/utils/getMarkerId";
 
 const List = () => {
   const { artworks, isLoading, getArtworks, setArtworks, setIsLoading } = useArtworks();
@@ -55,26 +48,38 @@ const List = () => {
               <TableHead>ID</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {artworks.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.title}</TableCell>
-                <TableCell>
-                  <span
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-                    style={{
-                      backgroundColor: categoryColors[item.category as Category] + '20',
-                      color: categoryColors[item.category as Category],
-                    }}
-                  >
-                    {item.category.replace('_', ' ')}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
+            {artworks.map((item) => {
+              const markerId = getMarkerId(item);
+              return (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.id}</TableCell>
+                  <TableCell>{item.title}</TableCell>
+                  <TableCell>
+                    <span
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: categoryColors[item.category as Category] + '20',
+                        color: categoryColors[item.category as Category],
+                      }}
+                    >
+                      {item.category.replace('_', ' ')}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Link 
+                      to={`/?markerId=${encodeURIComponent(markerId)}`}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      View on map
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
