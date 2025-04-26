@@ -23,6 +23,7 @@ import { useMarkerOperations } from '../hooks/useMarkerOperations';
 import { useZoneVisibility } from '../hooks/useZoneVisibility';
 import { useMarkerAppearanceUpdates } from '../hooks/useMarkerAppearanceUpdates';
 import { useMarkerUpdates } from '../hooks/useMarkerUpdates';
+import { getMarkerId } from '../utils/getMarkerId';
 
 L.Icon.Default.mergeOptions({
   iconUrl: icon,
