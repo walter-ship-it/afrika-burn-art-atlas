@@ -8,6 +8,12 @@ export interface MapState {
   zoom: number;
 }
 
+// Define zones as a constant to maintain a single source of truth
+const ZONES = [
+  { coords: [724, 1034], radius: 200 },
+  { coords: [800, 1000], radius: 150 },
+];
+
 export const useMapState = () => {
   const [mapError, setMapError] = useState<string | null>(null);
   const zoneLayerRef = useRef<L.LayerGroup | null>(null);
@@ -35,14 +41,28 @@ export const useMapState = () => {
   };
 
   const createZoneLayer = (map: L.Map) => {
+    // Clean up existing layer if it exists
+    if (zoneLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(zoneLayerRef.current);
+      zoneLayerRef.current.clearLayers();
+    }
+
     // Store the map reference
     mapRef.current = map;
     
-    // Create the layer group if it doesn't exist
-    if (!zoneLayerRef.current) {
-      zoneLayerRef.current = L.layerGroup();
-    }
+    // Create new layer group
+    zoneLayerRef.current = L.layerGroup();
     
+    // Add zone circles
+    ZONES.forEach(zone => {
+      L.circle(zone.coords, {
+        color: 'green',
+        fillColor: 'green',
+        fillOpacity: 0.2,
+        radius: zone.radius
+      }).addTo(zoneLayerRef.current!);
+    });
+
     return zoneLayerRef.current;
   };
 
@@ -50,19 +70,16 @@ export const useMapState = () => {
     if (!zoneLayerRef.current || !mapRef.current) return;
     
     if (show) {
-      // Only add if it's not already on the map
       if (!mapRef.current.hasLayer(zoneLayerRef.current)) {
         mapRef.current.addLayer(zoneLayerRef.current);
       }
     } else {
-      // Only remove if it's currently on the map
       if (mapRef.current.hasLayer(zoneLayerRef.current)) {
         mapRef.current.removeLayer(zoneLayerRef.current);
       }
     }
   };
 
-  // Clean up function to be used when component unmounts
   const cleanupZoneLayer = () => {
     if (zoneLayerRef.current && mapRef.current) {
       if (mapRef.current.hasLayer(zoneLayerRef.current)) {
@@ -84,3 +101,4 @@ export const useMapState = () => {
     cleanupZoneLayer
   };
 };
+
