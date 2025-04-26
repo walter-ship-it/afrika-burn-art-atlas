@@ -39,18 +39,16 @@ const ArtMap = () => {
   const { installState, promptInstall, dismissIOSHint } = useInstallPrompt();
   const { loadSavedMapState, saveMapState, createZoneLayer, toggleZoneVisibility, cleanupZoneLayer } = useMapState();
   const { createMarkerClusterGroup, createMarker } = useMarkers();
-  const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite } = useFavorites();
+  const { favorites, showOnlyFavorites, setShowOnlyFavorites, isFavorite, toggleFavorite } = useFavorites();
   const { setupMapInteractions } = useMapInteractions(leafletMap, saveMapState);
   const { setupFavoriteListeners, updateMarkerAppearance } = useMarkerUpdates();
 
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
 
-  // Initialize map with saved state
   const initialState = loadSavedMapState();
   useMapInitialization(mapRef, leafletMap, setMapError, initialState);
   
-  // Set up map interactions and create initial zone layer
   useEffect(() => {
     if (!leafletMap.current) return;
     
@@ -73,14 +71,12 @@ const ArtMap = () => {
     };
   }, [leafletMap.current]);
 
-  // Handle favorites toggle
   useEffect(() => {
     if (!leafletMap.current) return;
     console.log('[DEBUG] Handling favorites toggle:', showOnlyFavorites);
     toggleZoneVisibility(showOnlyFavorites);
   }, [showOnlyFavorites]);
 
-  // Create and update markers
   useEffect(() => {
     if (!leafletMap.current || !artworks.length) return;
     
@@ -117,7 +113,6 @@ const ArtMap = () => {
     
     leafletMap.current.addLayer(markers);
     
-    // Re-render every popup whenever favourites change
     const updatePopups = () => {
       console.log('[Favs] re-rendering popup content for all markers');
       markers.eachLayer((layer) => {
@@ -145,13 +140,11 @@ const ArtMap = () => {
       });
     };
 
-    // Set up popup open handler
     leafletMap.current.on('popupopen', (e) => {
       const btn = e.popup.getElement()?.querySelector('.fav-btn');
       if (btn) {
         const id = btn.getAttribute('data-id');
         if (id) {
-          // Remove existing listeners to prevent duplicates
           const newBtn = btn.cloneNode(true);
           btn.parentNode?.replaceChild(newBtn, btn);
           
@@ -163,7 +156,6 @@ const ArtMap = () => {
       }
     });
 
-    // Initial update and subscription to favorites changes
     updatePopups();
     setupFavoriteListeners(updatePopups);
     
@@ -175,7 +167,6 @@ const ArtMap = () => {
     };
   }, [artworks, targetId, leafletMap.current]);
 
-  // Update markers when favorites change
   useEffect(() => {
     if (markersRef.current) {
       updateMarkerAppearance(markersRef, leafletMap, artworks, showOnlyFavorites);
