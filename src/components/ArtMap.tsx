@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+
+import { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
 window.L = L;
