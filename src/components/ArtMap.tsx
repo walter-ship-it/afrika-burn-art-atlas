@@ -1,5 +1,4 @@
-
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import L from 'leaflet';
 // @ts-ignore
 window.L = L;
@@ -89,6 +88,49 @@ const ArtMap = () => {
     showOnlyFavorites,
     updateMarkerAppearance
   );
+
+  const renderPopupContent = (id: string, isFav: boolean) => `
+    <div class="marker-popup">
+      <b>${artworks.find(a => getMarkerId(a) === id)?.title}</b><br/>
+      <i>${artworks.find(a => getMarkerId(a) === id)?.category}</i>
+      <div class="flex justify-end mt-2">
+        <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${id}">
+          <span class="fav-empty">☆</span>
+          <span class="fav-full">★</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  useEffect(() => {
+    if (!markersRef.current) return;
+    
+    markersRef.current.eachLayer((layer) => {
+      const marker = layer as L.Marker;
+      const id = marker.options.id as string;
+      marker.setPopupContent(renderPopupContent(id, favorites.has(id)));
+    });
+  }, [favorites, artworks]);
+
+  useEffect(() => {
+    if (!leafletMap.current) return;
+
+    leafletMap.current.on('popupopen', (e) => {
+      const btn = e.popup.getElement()?.querySelector('.fav-btn');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        if (id) {
+          const newBtn = btn.cloneNode(true);
+          btn.parentNode?.replaceChild(newBtn, btn);
+          
+          newBtn.addEventListener('click', () => {
+            console.log('[Favs] popup click:', id);
+            toggleFavorite(id);
+          });
+        }
+      }
+    });
+  }, [toggleFavorite]);
 
   return (
     <div className="relative w-full h-full z-10">
