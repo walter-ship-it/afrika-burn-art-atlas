@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import L from 'leaflet';
 import { useArtworkLoading } from '@/hooks/useArtworkLoading';
@@ -14,6 +13,7 @@ import { useMarkers } from '@/hooks/useMarkers';
 import MapRenderer from './MapRenderer';
 import MapControls from './MapControls';
 import MapStatus from './MapStatus';
+import { useTargetMarker } from '@/hooks/useTargetMarker';
 
 const MapContainer = () => {
   const leafletMap = useRef<L.Map | null>(null);
@@ -29,7 +29,8 @@ const MapContainer = () => {
 
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('markerId');
-  const initialState = loadSavedMapState();
+  
+  useTargetMarker(markersRef, leafletMap, targetId, artworks);
 
   // Set up map interactions when map is ready
   const handleMapReady = (map: L.Map) => {
@@ -78,7 +79,7 @@ const MapContainer = () => {
     <div className="relative w-full h-full z-10">
       <MapRenderer
         setMapError={setMapError}
-        initialState={initialState}
+        initialState={loadSavedMapState()}
         onMapReady={handleMapReady}
       />
       <MapStatus isLoading={isLoading} error={mapError} />
