@@ -15,10 +15,16 @@ export const handleTargetMarker = (props: TargetMarkerProps) => {
   // Center the map on the marker with animation, using zoom level -2
   leafletMap.setView(marker.getLatLng(), -2, { animate: true });
   
-  // Open the popup after a short delay to ensure it's visible after zoom
+  // Find any cluster containing our marker and unspiderify it
+  const parentCluster = (marker as any).__parent;
+  if (parentCluster && typeof parentCluster.unspiderfy === 'function') {
+    parentCluster.unspiderfy();
+  }
+  
+  // Open the popup after a longer delay to ensure animations complete
   setTimeout(() => {
     marker.openPopup();
-  }, 500);
+  }, 800);
   
   // Add pulsing effect
   const el = marker.getElement();

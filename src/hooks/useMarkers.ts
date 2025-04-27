@@ -11,7 +11,7 @@ export const useMarkers = () => {
   const createMarkerClusterGroup = () => L.markerClusterGroup({
     maxClusterRadius: 40,
     spiderfyOnMaxZoom: true,
-    disableClusteringAtZoom: 1,
+    disableClusteringAtZoom: -2, // Disable clustering at our target zoom level
     showCoverageOnHover: false,
     removeOutsideVisibleBounds: true,
     animate: true,
