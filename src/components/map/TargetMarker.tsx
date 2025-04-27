@@ -12,11 +12,13 @@ interface TargetMarkerProps {
 export const handleTargetMarker = (props: TargetMarkerProps) => {
   const { marker, leafletMap } = props;
 
-  // Center the map on the marker with animation
-  leafletMap.setView(marker.getLatLng(), 0, { animate: true });
+  // Center the map on the marker with animation, using zoom level -2
+  leafletMap.setView(marker.getLatLng(), -2, { animate: true });
   
-  // Open the popup
-  marker.openPopup();
+  // Open the popup after a short delay to ensure it's visible after zoom
+  setTimeout(() => {
+    marker.openPopup();
+  }, 500);
   
   // Add pulsing effect
   const el = marker.getElement();
