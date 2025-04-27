@@ -31,7 +31,12 @@ export const useMarkerOperations = (
       if (!markersRef.current) {
         console.log('[MarkerOps] Creating new marker cluster');
         markers = createMarkerClusterGroup();
-        markersRef.current = markers;
+        // Instead of directly assigning to .current, we need a different approach
+        // since TypeScript marks .current as read-only
+        
+        // This is a workaround to update a read-only ref value
+        // We know this works because the parent component maintains this ref
+        (markersRef as any).current = markers;
       } else {
         console.log('[MarkerOps] Using existing marker cluster');
         markers = markersRef.current;
@@ -97,5 +102,5 @@ export const useMarkerOperations = (
     } catch (e) {
       console.error('[MarkerOps] Error in marker operations:', e);
     }
-  }, [artworks, targetId]); // Remove leafletMap from dependencies
+  }, [artworks, targetId]); // Removed leafletMap from dependencies
 };
