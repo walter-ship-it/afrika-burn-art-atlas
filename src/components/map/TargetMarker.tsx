@@ -12,21 +12,16 @@ interface TargetMarkerProps {
 export const handleTargetMarker = (props: TargetMarkerProps) => {
   const { marker, leafletMap } = props;
 
+  // First, check if map is valid
+  if (!leafletMap || !marker) {
+    console.error('[TargetMarker] Invalid map or marker reference');
+    return;
+  }
+
   // Center the map on the marker with animation, using zoom level -2
   leafletMap.setView(marker.getLatLng(), -2, { animate: true });
   
-  // Find any cluster containing our marker and unspiderify it
-  const parentCluster = (marker as any).__parent;
-  if (parentCluster && typeof parentCluster.unspiderfy === 'function') {
-    parentCluster.unspiderfy();
-  }
-  
-  // Open the popup after a longer delay to ensure animations complete
-  setTimeout(() => {
-    marker.openPopup();
-  }, 800);
-  
-  // Add pulsing effect
+  // Add pulsing effect first
   const el = marker.getElement();
   if (el) {
     // Remove any existing pulse class
@@ -38,4 +33,24 @@ export const handleTargetMarker = (props: TargetMarkerProps) => {
     // Remove the pulse class after animation
     setTimeout(() => el.classList.remove('pulse'), 3000);
   }
+
+  // Safely try to unspiderify after a short delay to make sure map is ready
+  setTimeout(() => {
+    try {
+      // Check if marker still exists and has a parent
+      const parentCluster = (marker as any).__parent;
+      if (parentCluster && typeof parentCluster.unspiderfy === 'function' && 
+          leafletMap && document.body.contains(leafletMap.getContainer())) {
+        // Only unspiderify if the map is still valid
+        parentCluster.unspiderfy();
+      }
+    } catch (e) {
+      console.error('[TargetMarker] Error during unspiderify:', e);
+    }
+    
+    // Open popup after the unspiderify attempt, regardless of success
+    if (marker && leafletMap && document.body.contains(leafletMap.getContainer())) {
+      marker.openPopup();
+    }
+  }, 300);
 };
