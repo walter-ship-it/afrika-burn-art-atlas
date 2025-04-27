@@ -17,92 +17,77 @@ export const useMarkerOperations = (
   setupFavoriteListeners: (callback: () => void) => void,
 ) => {
   useEffect(() => {
-    // Skip if no artworks
+    console.log('[MarkerOps] Starting marker operations, artworks:', artworks.length);
+    
     if (!artworks.length) {
-      console.log('[Markers] No artworks to display, skipping marker operations');
+      console.log('[MarkerOps] No artworks available');
       return;
     }
 
-    // Create a new markers cluster if none exists
     let markers: L.MarkerClusterGroup;
     
     try {
+      // Create or clear markers cluster
       if (!markersRef.current) {
-        console.log('[Markers] Creating new marker cluster group');
+        console.log('[MarkerOps] Creating new marker cluster');
         markers = createMarkerClusterGroup();
-        (markersRef as any).current = markers;
+        markersRef.current = markers;
       } else {
-        console.log('[Markers] Using existing marker cluster group');
+        console.log('[MarkerOps] Using existing marker cluster');
         markers = markersRef.current;
         markers.clearLayers();
       }
       
-      console.log('[Markers] Adding artwork markers to cluster');
+      // Create markers for each artwork
       artworks.forEach(artwork => {
-        try {
-          const markerId = getMarkerId(artwork);
-          const isFav = isFavorite(markerId);
-          const marker = createMarker(artwork, isFav);
-          
-          marker.options.id = markerId;
-          (marker as any).markerId = markerId;
-          
-          if (targetId && markerId === targetId) {
-            if (leafletMap.current && leafletMap.current._container && 
-                document.body.contains(leafletMap.current._container)) {
-              handleTargetMarker({
-                marker,
-                artwork,
-                leafletMap: leafletMap.current
-              });
-            }
-          }
-          
-          markers.addLayer(marker);
-        } catch (e) {
-          console.error('[Markers] Error creating marker:', e);
+        const markerId = getMarkerId(artwork);
+        const isFav = isFavorite(markerId);
+        const marker = createMarker(artwork, isFav);
+        
+        marker.options.id = markerId;
+        (marker as any).markerId = markerId;
+        
+        markers.addLayer(marker);
+        
+        // Handle target marker if needed
+        if (targetId && markerId === targetId && leafletMap.current) {
+          handleTargetMarker({
+            marker,
+            artwork,
+            leafletMap: leafletMap.current
+          });
         }
       });
-      
-      // Add markers to map if map is ready
-      if (leafletMap.current && leafletMap.current._container && 
-          document.body.contains(leafletMap.current._container)) {
-        try {
-          if (!leafletMap.current.hasLayer(markers)) {
-            leafletMap.current.addLayer(markers);
-          }
-        } catch (e) {
-          console.error('[Markers] Error adding markers to map:', e);
-        }
+
+      // Add markers to map if not already added
+      if (leafletMap.current && !leafletMap.current.hasLayer(markers)) {
+        leafletMap.current.addLayer(markers);
       }
 
+      // Setup popup content updates
       const updatePopups = () => {
-        console.log('[Markers] Updating popup content');
+        console.log('[MarkerOps] Updating popup content');
         markers.eachLayer((layer) => {
-          try {
-            const marker = layer as L.Marker;
-            const id = (marker as any).markerId;
-            if (id) {
-              const isFav = isFavorite(id);
-              const artwork = artworks.find(a => getMarkerId(a) === id);
-              if (artwork) {
-                const popupContent = `
-                  <div class="marker-popup">
-                    <b>${artwork.title}</b><br/>
-                    <i>${artwork.category}</i>
-                    <div class="flex justify-end mt-2">
-                      <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${id}">
-                        <span class="fav-empty">☆</span>
-                        <span class="fav-full">★</span>
-                      </button>
-                    </div>
+          const marker = layer as L.Marker;
+          const id = (marker as any).markerId;
+          if (id) {
+            const isFav = isFavorite(id);
+            const artwork = artworks.find(a => getMarkerId(a) === id);
+            if (artwork) {
+              const popupContent = `
+                <div class="marker-popup">
+                  <b>${artwork.title}</b><br/>
+                  <i>${artwork.category}</i>
+                  <div class="flex justify-end mt-2">
+                    <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${id}">
+                      <span class="fav-empty">☆</span>
+                      <span class="fav-full">★</span>
+                    </button>
                   </div>
-                `;
-                marker.setPopupContent(popupContent);
-              }
+                </div>
+              `;
+              marker.setPopupContent(popupContent);
             }
-          } catch (e) {
-            console.error('[Markers] Error updating popup:', e);
           }
         });
       };
@@ -110,9 +95,7 @@ export const useMarkerOperations = (
       setupFavoriteListeners(updatePopups);
       
     } catch (e) {
-      console.error('[Markers] Error in marker operations:', e);
+      console.error('[MarkerOps] Error in marker operations:', e);
     }
-    
-    // No cleanup needed as markers are managed by useMarkerAppearanceUpdates
-  }, [artworks, targetId]);
+  }, [artworks, targetId]); // Remove leafletMap from dependencies
 };

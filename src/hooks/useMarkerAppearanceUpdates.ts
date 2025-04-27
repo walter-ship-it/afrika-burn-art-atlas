@@ -16,28 +16,10 @@ export const useMarkerAppearanceUpdates = (
   ) => void
 ) => {
   useEffect(() => {
-    console.log('[MarkerAppearance] Updating markers visibility, showOnlyFavorites:', showOnlyFavorites);
+    console.log('[MarkerAppearance] Updating markers, showOnlyFavorites:', showOnlyFavorites);
     
     if (!markersRef.current) {
       console.log('[MarkerAppearance] No markers cluster available');
-      return;
-    }
-    
-    // Safe map state check
-    try {
-      if (leafletMap.current) {
-        if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
-          console.log('[MarkerAppearance] Map container not in DOM, skipping updates');
-          return;
-        }
-        
-        if (!leafletMap.current._panes || !leafletMap.current._mapPane) {
-          console.log('[MarkerAppearance] Map panes not available, map may be in process of being removed');
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('[MarkerAppearance] Error checking map state:', e);
       return;
     }
     
@@ -47,5 +29,5 @@ export const useMarkerAppearanceUpdates = (
     } catch (e) {
       console.error('[MarkerAppearance] Error updating marker appearance:', e);
     }
-  }, [showOnlyFavorites]);
+  }, [showOnlyFavorites, artworks]); // Add artworks to dependencies
 };

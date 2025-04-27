@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from './useArtworks';
@@ -10,12 +11,10 @@ export const useMarkerUpdates = () => {
   const listenerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
   const setupFavoriteListeners = (updateCallback: () => void) => {
-    // Remove existing listener if any
     if (listenerRef.current) {
       document.removeEventListener('click', listenerRef.current);
     }
 
-    // Create new listener
     const listener = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('.fav-btn')) {
@@ -34,13 +33,6 @@ export const useMarkerUpdates = () => {
 
     document.addEventListener('click', listener);
     listenerRef.current = listener;
-
-    // Return cleanup function
-    return () => {
-      if (listenerRef.current) {
-        document.removeEventListener('click', listenerRef.current);
-      }
-    };
   };
 
   const updateMarkerAppearance = (
@@ -49,37 +41,41 @@ export const useMarkerUpdates = () => {
     artworks: Artwork[],
     showOnlyFavorites: boolean
   ) => {
-    if (!markersRef.current || !leafletMap.current) return;
+    if (!markersRef.current) {
+      console.log('[MarkerUpdates] No marker cluster available');
+      return;
+    }
     
-    // We'll keep the cluster group on the map at all times and handle visibility at the marker level
-    // This avoids issues with marker management and improves performance
-
-    // Iterate through all markers and update their visibility
+    console.log('[MarkerUpdates] Updating markers visibility, showOnlyFavorites:', showOnlyFavorites);
+    
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
       const markerId = (marker as any).markerId;
-      if (!markerId) return;
+      
+      if (!markerId) {
+        console.log('[MarkerUpdates] Marker without ID found');
+        return;
+      }
+      
+      const artwork = artworks.find(a => getMarkerId(a) === markerId);
+      if (!artwork) {
+        console.log('[MarkerUpdates] No artwork found for marker:', markerId);
+        return;
+      }
       
       const isFav = isFavorite(markerId);
       const shouldShow = !showOnlyFavorites || isFav;
       
-      // Update marker icon to reflect favorite status
-      const artwork = artworks.find(a => getMarkerId(a) === markerId);
-      if (artwork) {
-        marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
-      }
-
-      // Update marker visibility
-      if (shouldShow) {
-        marker.setOpacity(1);
-        if (marker.getElement()) {
-          marker.getElement()!.style.display = '';
-        }
-      } else {
-        marker.setOpacity(0);
-        if (marker.getElement()) {
-          marker.getElement()!.style.display = 'none';
-        }
+      console.log(`[MarkerUpdates] Marker ${markerId} - isFav: ${isFav}, shouldShow: ${shouldShow}`);
+      
+      // Update marker icon
+      marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
+      
+      // Update visibility using opacity
+      marker.setOpacity(shouldShow ? 1 : 0);
+      const element = marker.getElement();
+      if (element) {
+        element.style.display = shouldShow ? '' : 'none';
       }
     });
   };
