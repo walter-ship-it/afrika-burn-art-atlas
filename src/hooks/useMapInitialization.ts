@@ -10,7 +10,6 @@ export const useMapInitialization = (
   initialState: MapState
 ) => {
   const tryFallbackImage = useCallback((map: L.Map) => {
-    // Skip if map container is no longer in DOM
     if (!map || !map._container || !document.body.contains(map._container)) {
       console.log('[Debug] Map container no longer in DOM, skipping fallback');
       return;
@@ -23,7 +22,6 @@ export const useMapInitialization = (
     const fallbackImg = new Image();
     
     fallbackImg.onload = () => {
-      // Double check map is still available before adding layer
       if (!map || !map._container || !document.body.contains(map._container)) {
         console.log('[Debug] Map no longer available, skipping fallback image overlay');
         return;
@@ -32,7 +30,6 @@ export const useMapInitialization = (
       try {
         console.log('[Debug] Fallback image loaded successfully!');
         setMapError(null);
-        // Check if map is still valid before adding overlay
         if (map && map.getContainer() && document.body.contains(map.getContainer())) {
           L.imageOverlay(fallbackImagePath, bounds).addTo(map);
         }
@@ -50,11 +47,9 @@ export const useMapInitialization = (
   }, [setMapError]);
 
   useEffect(() => {
-    // Initialization guard - only run once
     const initializationId = Date.now();
     console.log(`[Debug] Map initialization attempt ${initializationId}`);
     
-    // Guard against multiple initializations or missing ref
     if (!mapRef.current) {
       console.log('[Debug] Map ref not ready, skipping initialization');
       return;
@@ -65,7 +60,6 @@ export const useMapInitialization = (
       return;
     }
     
-    // Ensure DOM is ready before initializing map
     if (!document.body.contains(mapRef.current)) {
       console.log('[Debug] DOM element not in document yet, skipping initialization');
       return;
@@ -74,7 +68,6 @@ export const useMapInitialization = (
     console.log(`[Debug] Initializing map with element ${mapRef.current.id || 'unnamed'}...`);
     
     try {
-      // Create a local variable for initialization first before assigning to ref
       let map: L.Map | null = null;
       
       try {
@@ -93,12 +86,10 @@ export const useMapInitialization = (
         return;
       }
       
-      // Store reference immediately to avoid race conditions
       leafletMap.current = map;
       
       console.log('[Debug] Map created successfully, now setting up layers');
       
-      // Proper safety check before manipulating layers
       if (map && map._container && document.body.contains(map._container)) {
         map.eachLayer((layer) => {
           console.log('[Debug] Removing existing layer:', layer);
@@ -108,33 +99,33 @@ export const useMapInitialization = (
         const bounds = [[0, 0], [1448, 2068]];
         const primaryImagePath = '/img/map.png';
         
-        console.log('[Debug] Loading primary image');
+        console.log('[Debug] Loading primary image from:', primaryImagePath);
         const testImg = new Image();
         
         testImg.onload = () => {
-          // Double-check map is still valid when image loads
+          console.log('[Debug] Primary image successfully loaded');
           if (!map || !map._container || !document.body.contains(map._container)) {
             console.log('[Debug] Map container no longer available, skipping primary image');
             return;
           }
           
           try {
-            console.log('[Debug] Primary image loaded');
             if (map && map.getContainer() && document.body.contains(map.getContainer())) {
               L.imageOverlay(primaryImagePath, bounds).addTo(map);
+              setMapError(null);
+              console.log('[Debug] Primary image overlay added successfully');
             }
           } catch (overlayError) {
             console.error('[Debug] Error adding primary image overlay:', overlayError);
-            // If we have a map object and it's valid, try the fallback
             if (map && map._container && document.body.contains(map._container)) {
               tryFallbackImage(map);
             }
           }
         };
         
-        testImg.onerror = () => {
-          console.error('[Debug] Primary image load failed');
-          // Double-check map is still valid before trying fallback
+        testImg.onerror = (error) => {
+          console.error('[Debug] Primary image load failed:', error);
+          console.log('[Debug] Image attempted path:', primaryImagePath);
           if (map && map._container && document.body.contains(map._container)) {
             tryFallbackImage(map);
           }
@@ -142,7 +133,6 @@ export const useMapInitialization = (
         
         testImg.src = primaryImagePath;
         
-        // Set initial view and bounds after ensuring map is valid
         if (map && map._container && document.body.contains(map._container)) {
           try {
             map.setView([initialState.lat, initialState.lng], initialState.zoom);
@@ -157,7 +147,6 @@ export const useMapInitialization = (
         console.log(`[Debug] Cleanup for map initialization ${initializationId}`);
         if (!map) return;
         
-        // Only perform cleanup if container still exists in DOM
         try {
           if (map._container && document.body.contains(map._container)) {
             console.log('[Debug] Removing layers during cleanup');
@@ -169,7 +158,6 @@ export const useMapInitialization = (
               }
             });
             
-            // Careful removal of map only if it's still attached
             map.remove();
             console.log('[Debug] Map removed successfully');
           } else {
@@ -179,7 +167,6 @@ export const useMapInitialization = (
           console.error('[Debug] Error during map cleanup:', cleanupError);
         }
         
-        // Always clean up the reference
         leafletMap.current = null;
       };
     } catch (e) {
@@ -188,3 +175,4 @@ export const useMapInitialization = (
     }
   }, [mapRef, initialState, tryFallbackImage, setMapError]);
 };
+
