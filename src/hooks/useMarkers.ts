@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from '../hooks/useArtworks';
@@ -48,43 +49,15 @@ export const useMarkers = () => {
       offset: [0, -10],
     });
     
+    // Store marker ID for easy access
     (marker as any).markerId = markerId;
     
     return marker;
   };
 
-  const updateMarkerVisibility = (
-    marker: L.Marker,
-    showOnlyFavorites: boolean,
-    markerGroup: L.MarkerClusterGroup
-  ) => {
-    const markerId = (marker as any).markerId;
-    if (!markerId) return;
-    
-    try {
-      const isFavorite = (marker as any).isFavorite;
-      const shouldShow = !showOnlyFavorites || isFavorite;
-      
-      console.log(`[MarkerVisibility] Marker ${markerId} - isFavorite: ${isFavorite}, shouldShow: ${shouldShow}`);
-      
-      if (!shouldShow) {
-        if (markerGroup.hasLayer(marker)) {
-          markerGroup.removeLayer(marker);
-        }
-      } else {
-        if (!markerGroup.hasLayer(marker)) {
-          markerGroup.addLayer(marker);
-        }
-      }
-    } catch (e) {
-      console.error('[MarkerVisibility] Error updating marker visibility:', e);
-    }
-  };
-
   return {
     markerSize,
     createMarkerClusterGroup,
-    createMarker,
-    updateMarkerVisibility
+    createMarker
   };
 };

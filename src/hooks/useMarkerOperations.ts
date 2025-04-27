@@ -14,7 +14,7 @@ export const useMarkerOperations = (
   createMarkerClusterGroup: () => L.MarkerClusterGroup,
   isFavorite: (id: string) => boolean,
   toggleFavorite: (id: string) => void,
-  setupFavoriteListeners: (callback: () => void) => void,
+  setupFavoriteListeners: (toggleCallback: (id: string) => void) => void,
 ) => {
   useEffect(() => {
     console.log('[MarkerOps] Starting marker operations, artworks:', artworks.length);
@@ -54,9 +54,6 @@ export const useMarkerOperations = (
         marker.options.id = markerId;
         (marker as any).markerId = markerId;
         
-        // Store the marker's favorite state
-        (marker as any).isFavorite = isFav;
-        
         markers.addLayer(marker);
         
         // Handle target marker if needed
@@ -78,38 +75,10 @@ export const useMarkerOperations = (
       }
 
       // Setup popup content updates
-      const updatePopups = () => {
-        console.log('[MarkerOps] Updating popup content');
-        markers.eachLayer((layer) => {
-          const marker = layer as L.Marker;
-          const id = (marker as any).markerId;
-          if (id) {
-            const isFav = isFavorite(id);
-            (marker as any).isFavorite = isFav; // Update stored state
-            const artwork = artworks.find(a => getMarkerId(a) === id);
-            if (artwork) {
-              const popupContent = `
-                <div class="marker-popup">
-                  <b>${artwork.title}</b><br/>
-                  <i>${artwork.category}</i>
-                  <div class="flex justify-end mt-2">
-                    <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${id}">
-                      <span class="fav-empty">☆</span>
-                      <span class="fav-full">★</span>
-                    </button>
-                  </div>
-                </div>
-              `;
-              marker.setPopupContent(popupContent);
-            }
-          }
-        });
-      };
-
-      setupFavoriteListeners(updatePopups);
+      setupFavoriteListeners(toggleFavorite);
       
     } catch (e) {
       console.error('[MarkerOps] Error in marker operations:', e);
     }
-  }, [artworks, targetId, leafletMap.current]);
+  }, [artworks, targetId, leafletMap.current, isFavorite]);
 };

@@ -1,14 +1,14 @@
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import L from 'leaflet';
 import { Artwork } from './useArtworks';
-import { getMarkerId } from '../utils/getMarkerId';
 import { createMarkerIcon } from '../utils/markerIcons';
+import { getMarkerId } from '../utils/getMarkerId';
 
 export const useMarkerUpdates = () => {
   const listenerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
-  const setupFavoriteListeners = (updateCallback: () => void) => {
+  const setupFavoriteListeners = (toggleFavorite: (id: string) => void) => {
     if (listenerRef.current) {
       document.removeEventListener('click', listenerRef.current);
     }
@@ -23,7 +23,7 @@ export const useMarkerUpdates = () => {
         
         if (id) {
           btn.classList.toggle('favourited');
-          updateCallback();
+          toggleFavorite(id);
         }
       }
     };
@@ -36,7 +36,8 @@ export const useMarkerUpdates = () => {
     markersRef: React.MutableRefObject<L.MarkerClusterGroup | null>,
     leafletMap: React.MutableRefObject<L.Map | null>,
     artworks: Artwork[],
-    showOnlyFavorites: boolean
+    showOnlyFavorites: boolean,
+    isFavorite: (id: string) => boolean
   ) => {
     if (!markersRef.current) {
       console.log('[MarkerUpdates] No marker cluster available');
@@ -47,8 +48,24 @@ export const useMarkerUpdates = () => {
     
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
-      const isFav = (marker as any).isFavorite || false;
+      const markerId = (marker as any).markerId;
       
+      if (!markerId) {
+        console.log('[MarkerUpdates] Marker without ID found');
+        return;
+      }
+      
+      const isFav = isFavorite(markerId);
+      // Store current favorite status on marker for faster access
+      (marker as any).isFavorite = isFav;
+      
+      // Update marker icon based on favorite status
+      const artwork = artworks.find(a => getMarkerId(a) === markerId);
+      if (artwork) {
+        marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
+      }
+      
+      // Update visibility based on filter
       if (showOnlyFavorites && !isFav) {
         // Hide non-favorite markers
         marker.setOpacity(0);
@@ -63,6 +80,23 @@ export const useMarkerUpdates = () => {
         if (element) {
           element.style.display = '';
         }
+      }
+      
+      // Update popup content to reflect favorite status
+      if (artwork) {
+        const popupContent = `
+          <div class="marker-popup">
+            <b>${artwork.title}</b><br/>
+            <i>${artwork.category}</i>
+            <div class="flex justify-end mt-2">
+              <button class="fav-btn ${isFav ? 'favourited' : ''}" data-id="${markerId}">
+                <span class="fav-empty">☆</span>
+                <span class="fav-full">★</span>
+              </button>
+            </div>
+          </div>
+        `;
+        marker.setPopupContent(popupContent);
       }
     });
   };

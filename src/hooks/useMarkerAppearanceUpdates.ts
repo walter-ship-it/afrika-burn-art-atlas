@@ -8,11 +8,13 @@ export const useMarkerAppearanceUpdates = (
   leafletMap: React.RefObject<L.Map | null>,
   artworks: Artwork[],
   showOnlyFavorites: boolean,
+  isFavorite: (id: string) => boolean,
   updateMarkerAppearance: (
     markersRef: React.MutableRefObject<L.MarkerClusterGroup | null>,
     leafletMap: React.MutableRefObject<L.Map | null>,
     artworks: Artwork[],
-    showOnlyFavorites: boolean
+    showOnlyFavorites: boolean,
+    isFavorite: (id: string) => boolean
   ) => void
 ) => {
   useEffect(() => {
@@ -24,10 +26,10 @@ export const useMarkerAppearanceUpdates = (
     }
     
     try {
-      updateMarkerAppearance(markersRef as any, leafletMap as any, artworks, showOnlyFavorites);
+      updateMarkerAppearance(markersRef as any, leafletMap as any, artworks, showOnlyFavorites, isFavorite);
       console.log('[MarkerAppearance] Marker visibility updated successfully');
     } catch (e) {
       console.error('[MarkerAppearance] Error updating marker appearance:', e);
     }
-  }, [showOnlyFavorites, artworks]);
+  }, [showOnlyFavorites, artworks, isFavorite]);
 };

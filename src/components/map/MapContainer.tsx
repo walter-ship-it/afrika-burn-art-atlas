@@ -1,9 +1,10 @@
+
 import React, { useRef } from 'react';
 import L from 'leaflet';
 import { useArtworkLoading } from '@/hooks/useArtworkLoading';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useMapState } from '@/hooks/useMapState';
-import { useFavorites } from '@/hooks/useFavorites';
+import { useFavorites } from '@/context/FavoritesContext';
 import { useMapInteractions } from '@/hooks/useMapInteractions';
 import { useZoneVisibility } from '@/hooks/useZoneVisibility';
 import { useMarkerOperations } from '@/hooks/useMarkerOperations';
@@ -60,6 +61,7 @@ const MapContainer = () => {
     leafletMap,
     artworks,
     showOnlyFavorites,
+    isFavorite,
     updateMarkerAppearance
   );
 
