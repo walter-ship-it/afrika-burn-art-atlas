@@ -18,8 +18,8 @@ export const useMarkerAppearanceUpdates = (
   useEffect(() => {
     console.log('[MarkerAppearance] Updating markers, showOnlyFavorites:', showOnlyFavorites);
     
-    if (!markersRef.current) {
-      console.log('[MarkerAppearance] No markers cluster available');
+    if (!markersRef.current || !leafletMap.current) {
+      console.log('[MarkerAppearance] No markers cluster or map available');
       return;
     }
     
@@ -29,5 +29,5 @@ export const useMarkerAppearanceUpdates = (
     } catch (e) {
       console.error('[MarkerAppearance] Error updating marker appearance:', e);
     }
-  }, [showOnlyFavorites, artworks]); // Add artworks to dependencies
+  }, [showOnlyFavorites, artworks]);
 };

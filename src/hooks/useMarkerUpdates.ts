@@ -4,10 +4,8 @@ import L from 'leaflet';
 import { Artwork } from './useArtworks';
 import { getMarkerId } from '../utils/getMarkerId';
 import { createMarkerIcon } from '../utils/markerIcons';
-import { useFavorites } from './useFavorites';
 
 export const useMarkerUpdates = () => {
-  const { isFavorite, toggleFavorite } = useFavorites();
   const listenerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
   const setupFavoriteListeners = (updateCallback: () => void) => {
@@ -24,7 +22,6 @@ export const useMarkerUpdates = () => {
         const id = btn.dataset.id;
         
         if (id) {
-          toggleFavorite(id);
           btn.classList.toggle('favourited');
           updateCallback();
         }
@@ -50,32 +47,22 @@ export const useMarkerUpdates = () => {
     
     markersRef.current.eachLayer((layer) => {
       const marker = layer as L.Marker;
-      const markerId = (marker as any).markerId;
+      const isFav = (marker as any).isFavorite || false;
       
-      if (!markerId) {
-        console.log('[MarkerUpdates] Marker without ID found');
-        return;
-      }
-      
-      const artwork = artworks.find(a => getMarkerId(a) === markerId);
-      if (!artwork) {
-        console.log('[MarkerUpdates] No artwork found for marker:', markerId);
-        return;
-      }
-      
-      const isFav = isFavorite(markerId);
-      const shouldShow = !showOnlyFavorites || isFav;
-      
-      console.log(`[MarkerUpdates] Marker ${markerId} - isFav: ${isFav}, shouldShow: ${shouldShow}`);
-      
-      // Update marker icon
-      marker.setIcon(createMarkerIcon(artwork.category.toLowerCase(), isFav));
-      
-      // Update visibility using opacity
-      marker.setOpacity(shouldShow ? 1 : 0);
-      const element = marker.getElement();
-      if (element) {
-        element.style.display = shouldShow ? '' : 'none';
+      if (showOnlyFavorites && !isFav) {
+        // Hide non-favorite markers
+        marker.setOpacity(0);
+        const element = marker.getElement();
+        if (element) {
+          element.style.display = 'none';
+        }
+      } else {
+        // Show marker
+        marker.setOpacity(1);
+        const element = marker.getElement();
+        if (element) {
+          element.style.display = '';
+        }
       }
     });
   };

@@ -24,6 +24,11 @@ export const useMarkerOperations = (
       return;
     }
 
+    if (!leafletMap.current) {
+      console.log('[MarkerOps] Map not ready');
+      return;
+    }
+
     let markers: L.MarkerClusterGroup;
     
     try {
@@ -31,17 +36,14 @@ export const useMarkerOperations = (
       if (!markersRef.current) {
         console.log('[MarkerOps] Creating new marker cluster');
         markers = createMarkerClusterGroup();
-        // Instead of directly assigning to .current, we need a different approach
-        // since TypeScript marks .current as read-only
-        
-        // This is a workaround to update a read-only ref value
-        // We know this works because the parent component maintains this ref
         (markersRef as any).current = markers;
       } else {
         console.log('[MarkerOps] Using existing marker cluster');
         markers = markersRef.current;
-        markers.clearLayers();
       }
+
+      // Clear existing layers before adding new ones
+      markers.clearLayers();
       
       // Create markers for each artwork
       artworks.forEach(artwork => {
@@ -51,6 +53,9 @@ export const useMarkerOperations = (
         
         marker.options.id = markerId;
         (marker as any).markerId = markerId;
+        
+        // Store the marker's favorite state
+        (marker as any).isFavorite = isFav;
         
         markers.addLayer(marker);
         
@@ -62,10 +67,13 @@ export const useMarkerOperations = (
             leafletMap: leafletMap.current
           });
         }
+
+        console.log(`[MarkerOps] Created marker for ${markerId}, isFavorite: ${isFav}`);
       });
 
       // Add markers to map if not already added
-      if (leafletMap.current && !leafletMap.current.hasLayer(markers)) {
+      if (!leafletMap.current.hasLayer(markers)) {
+        console.log('[MarkerOps] Adding marker cluster to map');
         leafletMap.current.addLayer(markers);
       }
 
@@ -77,6 +85,7 @@ export const useMarkerOperations = (
           const id = (marker as any).markerId;
           if (id) {
             const isFav = isFavorite(id);
+            (marker as any).isFavorite = isFav; // Update stored state
             const artwork = artworks.find(a => getMarkerId(a) === id);
             if (artwork) {
               const popupContent = `
@@ -102,5 +111,5 @@ export const useMarkerOperations = (
     } catch (e) {
       console.error('[MarkerOps] Error in marker operations:', e);
     }
-  }, [artworks, targetId]); // Removed leafletMap from dependencies
+  }, [artworks, targetId, leafletMap.current]);
 };
