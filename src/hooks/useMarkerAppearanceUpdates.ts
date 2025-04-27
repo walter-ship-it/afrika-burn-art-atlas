@@ -16,12 +16,14 @@ export const useMarkerAppearanceUpdates = (
   ) => void
 ) => {
   useEffect(() => {
-    // Skip if we don't have markers
+    console.log('[MarkerAppearance] Updating markers visibility, showOnlyFavorites:', showOnlyFavorites);
+    
     if (!markersRef.current) {
+      console.log('[MarkerAppearance] No markers cluster available');
       return;
     }
     
-    // Safely check map state before updating
+    // Safe map state check
     try {
       if (leafletMap.current) {
         if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
@@ -41,8 +43,9 @@ export const useMarkerAppearanceUpdates = (
     
     try {
       updateMarkerAppearance(markersRef as any, leafletMap as any, artworks, showOnlyFavorites);
+      console.log('[MarkerAppearance] Marker visibility updated successfully');
     } catch (e) {
       console.error('[MarkerAppearance] Error updating marker appearance:', e);
     }
-  }, [artworks, showOnlyFavorites]);
+  }, [showOnlyFavorites]);
 };

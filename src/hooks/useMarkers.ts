@@ -58,23 +58,26 @@ export const useMarkers = () => {
     showOnlyFavorites: boolean,
     markerGroup: L.MarkerClusterGroup
   ) => {
-    const isFavorite = (marker as any).isFavorite;
-    const shouldShow = !showOnlyFavorites || isFavorite;
+    const markerId = (marker as any).markerId;
+    if (!markerId) return;
     
-    if (!shouldShow) {
-      markerGroup.removeLayer(marker);
-      if (marker.getElement()) {
-        marker.getElement().style.display = 'none';
+    try {
+      const isFavorite = (marker as any).isFavorite;
+      const shouldShow = !showOnlyFavorites || isFavorite;
+      
+      console.log(`[MarkerVisibility] Marker ${markerId} - isFavorite: ${isFavorite}, shouldShow: ${shouldShow}`);
+      
+      if (!shouldShow) {
+        if (markerGroup.hasLayer(marker)) {
+          markerGroup.removeLayer(marker);
+        }
+      } else {
+        if (!markerGroup.hasLayer(marker)) {
+          markerGroup.addLayer(marker);
+        }
       }
-      marker.setOpacity(0);
-    } else {
-      if (!markerGroup.hasLayer(marker)) {
-        markerGroup.addLayer(marker);
-      }
-      if (marker.getElement()) {
-        marker.getElement().style.display = '';
-      }
-      marker.setOpacity(1);
+    } catch (e) {
+      console.error('[MarkerVisibility] Error updating marker visibility:', e);
     }
   };
 

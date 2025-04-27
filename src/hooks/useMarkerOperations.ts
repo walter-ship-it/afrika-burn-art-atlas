@@ -17,48 +17,27 @@ export const useMarkerOperations = (
   setupFavoriteListeners: (callback: () => void) => void,
 ) => {
   useEffect(() => {
-    // Safely check if we have a valid map and artworks
+    // Skip if no artworks
     if (!artworks.length) {
       console.log('[Markers] No artworks to display, skipping marker operations');
       return;
     }
-    
-    if (!leafletMap.current) {
-      console.log('[Markers] Map not available yet, skipping marker operations');
-      return;
-    }
-    
-    // Safe check for map validity before proceeding
-    try {
-      if (!leafletMap.current._container || !document.body.contains(leafletMap.current._container)) {
-        console.log('[Markers] Map container not in DOM, skipping marker operations');
-        return;
-      }
-      
-      if (!leafletMap.current._panes || !leafletMap.current._mapPane) {
-        console.log('[Markers] Map panes not available, map may be in process of being removed');
-        return;
-      }
-    } catch (e) {
-      console.error('[Markers] Error checking map state:', e);
-      return;
-    }
-    
-    console.log('[Markers] Creating and adding markers to map');
-    
+
     // Create a new markers cluster if none exists
     let markers: L.MarkerClusterGroup;
     
     try {
       if (!markersRef.current) {
+        console.log('[Markers] Creating new marker cluster group');
         markers = createMarkerClusterGroup();
-        // Use non-null assertion because we just created it
         (markersRef as any).current = markers;
       } else {
+        console.log('[Markers] Using existing marker cluster group');
         markers = markersRef.current;
         markers.clearLayers();
       }
       
+      console.log('[Markers] Adding artwork markers to cluster');
       artworks.forEach(artwork => {
         try {
           const markerId = getMarkerId(artwork);
@@ -69,15 +48,14 @@ export const useMarkerOperations = (
           (marker as any).markerId = markerId;
           
           if (targetId && markerId === targetId) {
-            setTimeout(() => {
-              if (leafletMap.current && document.body.contains(leafletMap.current._container)) {
-                handleTargetMarker({
-                  marker,
-                  artwork,
-                  leafletMap: leafletMap.current
-                });
-              }
-            }, 100);
+            if (leafletMap.current && leafletMap.current._container && 
+                document.body.contains(leafletMap.current._container)) {
+              handleTargetMarker({
+                marker,
+                artwork,
+                leafletMap: leafletMap.current
+              });
+            }
           }
           
           markers.addLayer(marker);
@@ -86,11 +64,9 @@ export const useMarkerOperations = (
         }
       });
       
-      // Add to map if not already added - safely check map state first
-      if (leafletMap.current && 
-          leafletMap.current._container && 
+      // Add markers to map if map is ready
+      if (leafletMap.current && leafletMap.current._container && 
           document.body.contains(leafletMap.current._container)) {
-        
         try {
           if (!leafletMap.current.hasLayer(markers)) {
             leafletMap.current.addLayer(markers);
@@ -99,9 +75,9 @@ export const useMarkerOperations = (
           console.error('[Markers] Error adding markers to map:', e);
         }
       }
-      
+
       const updatePopups = () => {
-        console.log('[Favs] re-rendering popup content for all markers');
+        console.log('[Markers] Updating popup content');
         markers.eachLayer((layer) => {
           try {
             const marker = layer as L.Marker;
@@ -126,66 +102,17 @@ export const useMarkerOperations = (
               }
             }
           } catch (e) {
-            console.error('[Markers] Error updating popup content:', e);
+            console.error('[Markers] Error updating popup:', e);
           }
         });
       };
 
-      // Only attach event if map is still valid
-      if (leafletMap.current && 
-          leafletMap.current._container && 
-          document.body.contains(leafletMap.current._container)) {
-        
-        try {
-          leafletMap.current.on('popupopen', (e) => {
-            try {
-              const btn = e.popup.getElement()?.querySelector('.fav-btn');
-              if (btn) {
-                const id = btn.getAttribute('data-id');
-                if (id) {
-                  const newBtn = btn.cloneNode(true);
-                  btn.parentNode?.replaceChild(newBtn, btn);
-                  
-                  newBtn.addEventListener('click', () => {
-                    console.log('[Favs] popup click toggle:', id);
-                    toggleFavorite(id);
-                  });
-                }
-              }
-            } catch (e) {
-              console.error('[Markers] Error handling popup open:', e);
-            }
-          });
-        } catch (e) {
-          console.error('[Markers] Error setting up popup open handler:', e);
-        }
-      }
-
-      updatePopups();
       setupFavoriteListeners(updatePopups);
+      
     } catch (e) {
       console.error('[Markers] Error in marker operations:', e);
     }
     
-    return () => {
-      // Cleanup only if we need to remove
-      try {
-        if (leafletMap.current && markersRef.current) {
-          try {
-            // Check if map is still valid
-            if (leafletMap.current._container && 
-                document.body.contains(leafletMap.current._container) && 
-                leafletMap.current.hasLayer(markersRef.current)) {
-              
-              leafletMap.current.removeLayer(markersRef.current);
-            }
-          } catch (e) {
-            console.error('[Markers] Error removing markers during cleanup:', e);
-          }
-        }
-      } catch (e) {
-        console.error('[Markers] Error in marker cleanup:', e);
-      }
-    };
-  }, [artworks, targetId, leafletMap.current]);
+    // No cleanup needed as markers are managed by useMarkerAppearanceUpdates
+  }, [artworks, targetId]);
 };
